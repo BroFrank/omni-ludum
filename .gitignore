@@ -1,0 +1,88 @@
+# ===========================================
+# ROOT
+# ===========================================
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.log
+
+# ===========================================
+# BACKEND (Rails API) - /api
+# ===========================================
+
+# Dependencies
+api/vendor/bundle/
+api/.bundle/
+
+# Logs and temp files
+api/log/*.log
+api/tmp/pids/*
+api/tmp/sockets/*
+api/tmp/cache/
+api/tmp/restart.txt
+
+# Database
+api/db/*.sqlite3
+api/db/*.db
+
+# Environment variables
+api/.env
+api/.env.local
+api/config/credentials.yml.enc
+api/config/master.key
+
+# Ruby
+api/*.gem
+api/gemfiles/Gemfile.lock
+
+# Testing
+api/coverage/
+
+# Documentation
+api/doc/
+api/rdoc/
+
+# ===========================================
+# FRONTEND (SvelteKit) - /client
+# ===========================================
+
+# Dependencies
+client/node_modules/
+
+# SvelteKit build
+client/.svelte-kit/
+client/build/
+
+# Environment variables
+client/.env
+client/.env.local
+client/.env.*.local
+
+# Testing
+client/coverage/
+client/.vitest/
+
+# TypeScript
+client/*.tsbuildinfo
+
+# ===========================================
+# EXCEPTIONS (Keep these files tracked)
+# ===========================================
+
+# Keep .keep files in Rails directories
+!api/log/.keep
+!api/tmp/.keep
+!api/storage/.keep
+
+# Keep SvelteKit type definitions
+!client/src/app.d.ts
+
+# Keep package lock files
+!api/Gemfile.lock
+!client/package-lock.json
+
+# Keep config files
+!client/.npmrc
