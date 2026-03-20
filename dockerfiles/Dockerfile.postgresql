@@ -1,0 +1,23 @@
+# PostgreSQL 18+ Development Container
+# This Dockerfile sets up PostgreSQL for the Omni Ludum project
+
+FROM postgres:18-alpine
+
+# Set default environment variables
+# These can be overridden in docker-compose.yml
+ENV POSTGRES_DB=omni_ludum_development
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=postgres
+
+# Expose PostgreSQL default port
+EXPOSE 5432
+
+# Volume for persistent data storage
+VOLUME ["/var/lib/postgresql/data"]
+
+# Health check to ensure PostgreSQL is ready
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=5 \
+  CMD pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} || exit 1
+
+# Default command is inherited from postgres:18-alpine
+# No need to override unless custom initialization is required

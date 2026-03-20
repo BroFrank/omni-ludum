@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  # PostgreSQL Database Service
+  # Uses custom Dockerfile from dockerfiles/ directory
+  db:
+    build:
+      context: ./dockerfiles
+      dockerfile: Dockerfile.postgresql
+    container_name: omni_ludum_db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: omni_ludum_development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      # Persistent data volume
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d omni_ludum_development"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - omni_ludum_network
+
+volumes:
+  postgres_data:
+    name: omni_ludum_postgres_data
+
+networks:
+  omni_ludum_network:
+    name: omni_ludum_network
+    driver: bridge
