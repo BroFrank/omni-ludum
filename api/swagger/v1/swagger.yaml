@@ -88,7 +88,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/NotFoundError'
     patch:
       summary: Update user
       description: Updates an existing user's details
@@ -114,6 +114,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
         '422':
           description: Validation error
           content:
@@ -141,6 +147,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
         '422':
           description: Validation error
           content:
@@ -267,4 +279,12 @@ components:
           items:
             type: string
           description: List of validation error messages
-          example: ["Email has already been taken", "Password is too short"]
+          example: ["Email has already been taken", "Password is too short (minimum is 7 characters)"]
+
+    NotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "User not found"

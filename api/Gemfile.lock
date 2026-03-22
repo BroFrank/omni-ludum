@@ -142,9 +142,7 @@ GEM
     mcp (0.9.0)
       json-schema (>= 4.1)
     mini_mime (1.1.5)
-    minitest (6.0.2)
-      drb (~> 2.0)
-      prism (~> 1.5)
+    minitest (5.27.0)
     msgpack (1.8.0)
     net-imap (0.6.3)
       date
@@ -219,6 +217,10 @@ GEM
       activesupport (= 7.2.3)
       bundler (>= 1.15.0)
       railties (= 7.2.3)
+    rails-controller-testing (1.0.5)
+      actionpack (>= 5.0.1.rc1)
+      actionview (>= 5.0.1.rc1)
+      activesupport (>= 5.0.1.rc1)
     rails-dom-testing (2.3.0)
       activesupport (>= 5.0.0)
       minitest
@@ -329,10 +331,12 @@ DEPENDENCIES
   debug
   jbuilder
   kaminari
+  minitest (~> 5.0)
   pg (~> 1.1)
   puma (>= 5.0)
   rack-cors
   rails (~> 7.2.3)
+  rails-controller-testing
   rswag
   rswag-api
   rswag-ui

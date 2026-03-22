@@ -28,5 +28,9 @@ module Api
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # Set default locale to English
+    config.i18n.default_locale = :en
+    config.i18n.available_locales = [:en, :ru]
   end
 end

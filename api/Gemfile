@@ -46,4 +46,10 @@ group :development, :test do
   gem "rswag"
   gem "rswag-api"
   gem "rswag-ui"
+
+  # Use minitest 5.x for compatibility with Rails 7.2
+  gem "minitest", "~> 5.0"
+
+  # Controller testing helpers for Rails
+  gem "rails-controller-testing"
 end

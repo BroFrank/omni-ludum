@@ -2,22 +2,22 @@ class User < ApplicationRecord
   has_secure_password
 
   validates :username, presence: true
-  validates :username, uniqueness: { case_sensitive: true }
+  validates :username, uniqueness: { case_sensitive: false }
   validates :username, length: { minimum: 3 }
-  validates :username, format: { with: /\A[a-zA-Z0-9 ]+\z/, message: "может содержать только буквы, цифры и пробелы" }
+  validates :username, format: { with: /\A[a-zA-Z0-9 ]+\z/, message: :invalid }
 
   validates :email, presence: true
   validates :email, uniqueness: { case_sensitive: false }
-  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: "должен быть валидный email" }
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: :invalid }
 
   validates :password, length: { minimum: 7, allow_nil: true }
-  validates :password, format: { with: /\A.*[A-Z].*\z/, message: "должен содержать заглавную букву", allow_nil: true }
-  validates :password, format: { with: /\A.*[a-z].*\z/, message: "должен содержать строчную букву", allow_nil: true }
-  validates :password, format: { with: /\A.*[0-9].*\z/, message: "должен содержать цифру", allow_nil: true }
-  validates :password, format: { with: /\A.*[!@#$%^&*(),.?":{}|<>].*\z/, message: "должен содержать спецсимвол", allow_nil: true }
+  validates :password, format: { with: /\A.*[A-Z].*\z/, message: :invalid_password_format, allow_nil: true }
+  validates :password, format: { with: /\A.*[a-z].*\z/, message: :invalid_password_format, allow_nil: true }
+  validates :password, format: { with: /\A.*[0-9].*\z/, message: :invalid_password_format, allow_nil: true }
+  validates :password, format: { with: /\A.*[!@#$%^&*(),.?":{}|<>].*\z/, message: :invalid_password_format, allow_nil: true }
 
   validates :role, presence: true
-  validates :role, inclusion: { in: USER_ROLES::ALL_ROLES, message: "неверная роль" }
+  validates :role, inclusion: { in: USER_ROLES::ALL_ROLES, message: :invalid }
 
   validates :slug, uniqueness: { case_sensitive: false }
 

@@ -29,3 +29,25 @@
 
 en:
   hello: "Hello world"
+  activerecord:
+    errors:
+      models:
+        user:
+          attributes:
+            username:
+              blank: "can't be blank"
+              taken: "has already been taken"
+              too_short: "is too short (minimum is %{count} characters)"
+              invalid: "can only contain letters, numbers, and spaces"
+            email:
+              blank: "can't be blank"
+              taken: "has already been taken"
+              invalid: "is not a valid email"
+            password:
+              too_short: "is too short (minimum is %{count} characters)"
+              invalid: "is not valid"
+              invalid_password_format: "must contain at least one uppercase letter, one lowercase letter, one digit, and one special character"
+            role:
+              inclusion: "is not valid"
+            slug:
+              taken: "has already been taken"
