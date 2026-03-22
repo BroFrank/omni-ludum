@@ -1,0 +1,270 @@
+openapi: 3.0.3
+info:
+  title: Omni Ludum API - Users
+  description: API documentation for User management endpoints
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Development server
+
+paths:
+  /api/v1/users:
+    get:
+      summary: Get list of active users
+      description: Returns a paginated list of active (non-disabled) users
+      tags:
+        - Users
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      summary: Create a new user
+      description: Creates a new user with the provided details
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/users/{slug}:
+    get:
+      summary: Get user by slug
+      description: Returns a single active user by their slug
+      tags:
+        - Users
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Unique slug identifier for the user
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      summary: Update user
+      description: Updates an existing user's details
+      tags:
+        - Users
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Unique slug identifier for the user
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/users/{id}/disable:
+    patch:
+      summary: Disable user (soft delete)
+      description: Sets the user's is_disabled flag to true (soft delete)
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User slug identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User disabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique user ID
+        username:
+          type: string
+          description: User's display name
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john@example.com"
+        role:
+          type: string
+          enum: [SUPER_ADMIN, ADMIN, MODERATOR, REGULAR]
+          description: User's role in the system
+          example: "REGULAR"
+        slug:
+          type: string
+          description: URL-friendly unique identifier
+          example: "john_doe"
+        is_disabled:
+          type: boolean
+          description: Whether the user account is disabled
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      required:
+        - id
+        - username
+        - email
+        - role
+        - slug
+        - is_disabled
+        - created_at
+        - updated_at
+
+    CreateUserRequest:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            username:
+              type: string
+              minLength: 3
+              pattern: '^[a-zA-Z0-9 ]+$'
+              example: "newuser"
+            email:
+              type: string
+              format: email
+              example: "newuser@example.com"
+            password:
+              type: string
+              minLength: 7
+              description: Must contain uppercase, lowercase, digit, and special character
+              example: "SecurePass123!"
+            password_confirmation:
+              type: string
+              description: Must match password
+              example: "SecurePass123!"
+            role:
+              type: string
+              enum: [SUPER_ADMIN, ADMIN, MODERATOR, REGULAR]
+              description: User role (defaults to REGULAR if not provided)
+              example: "REGULAR"
+          required:
+            - username
+            - email
+            - password
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        user:
+          type: object
+          properties:
+            username:
+              type: string
+              minLength: 3
+              pattern: '^[a-zA-Z0-9 ]+$'
+              example: "updateduser"
+            email:
+              type: string
+              format: email
+              example: "updated@example.com"
+            password:
+              type: string
+              minLength: 7
+              description: Must contain uppercase, lowercase, digit, and special character
+              example: "NewSecurePass123!"
+            password_confirmation:
+              type: string
+              description: Must match password
+              example: "NewSecurePass123!"
+            role:
+              type: string
+              enum: [SUPER_ADMIN, ADMIN, MODERATOR, REGULAR]
+              example: "MODERATOR"
+
+    ErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of validation error messages
+          example: ["Email has already been taken", "Password is too short"]

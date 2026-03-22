@@ -4,7 +4,7 @@ module Api
       private
 
       def user_not_found
-        render json: { error: 'Пользователь не найден' }, status: :not_found
+        render json: { error: "Пользователь не найден" }, status: :not_found
       end
     end
   end

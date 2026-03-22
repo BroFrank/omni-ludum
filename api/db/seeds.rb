@@ -49,3 +49,7 @@ User.new(
   role: USER_ROLES::REGULAR,
   is_disabled: true
 ).save(validate: false)
+
+User.all.each do |u|
+  u.update_column(:slug, u.username.downcase.gsub(/\s+/, '_').gsub(/[^a-z0-9_]/, ''))
+end
