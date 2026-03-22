@@ -209,15 +209,101 @@ npm run lint              # ESLint
 
 ## Current State
 
-As of this analysis:
-- The API is a fresh Rails 7.2.3 setup with PostgreSQL
-- No custom models or controllers have been implemented yet
-- Routes are minimal (only health check endpoint)
-- The client has basic SvelteKit structure with Tailwind CSS
-- Test infrastructure is configured for both backend and frontend
+- **Backend**: User model implemented with full CRUD API
+- **Frontend**: Basic SvelteKit structure with Tailwind CSS
+- **Documentation**: Swagger UI available at `/api-docs`
+
+## User Entity
+
+### Roles (`USER_ROLES`)
+
+User roles are defined in `api/config/initializers/consts.rb`:
+
+```ruby
+USER_ROLES = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  MODERATOR: 'MODERATOR',
+  REGULAR: 'REGULAR'
+}
+```
+
+Default role: `REGULAR`
+
+### Model Fields
+
+| Field | Type | Constraints |
+|-------|------|-------------|
+| `id` | bigint | Primary key |
+| `username` | string | Unique, min 3 chars, alphanumeric + spaces |
+| `email` | string | Unique, valid email format |
+| `password_digest` | string | BCrypt encrypted |
+| `role` | string | One of USER_ROLES, default: REGULAR |
+| `is_disabled` | boolean | Default: false (soft delete flag) |
+| `slug` | string | Unique, auto-generated from username |
+| `created_at` | datetime | Auto-generated |
+| `updated_at` | datetime | Auto-generated |
+
+### Password Requirements
+
+- Minimum 7 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one digit
+- At least one special character: `!@#$%^&*(),.?":{}|<>`
+
+### Slug Generation
+
+Auto-generated from username:
+- Converted to lowercase
+- Spaces replaced with underscores
+- Special characters removed
+- Example: `"Bob 22"` → `"bob_22"`
+
+### Scopes
+
+- `User.active` — returns users where `is_disabled: false`
+- `User.disabled` — returns users where `is_disabled: true`
+
+### Instance Methods
+
+- `admin?` — true if role is SUPER_ADMIN or ADMIN
+- `moderator?` — true if role is SUPER_ADMIN, ADMIN, or MODERATOR
+- `regular?` — true if role is REGULAR
+
+### Class Methods
+
+- `User.find_by_slug!(slug)` — find active user by slug (raises error if not found)
+- `User.find_by_slug(slug)` — find active user by slug (returns nil if not found)
+
+## API Endpoints
+
+All endpoints are under `/api/v1` namespace.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/users` | List active users (paginated) |
+| GET | `/api/v1/users/:slug` | Get user by slug |
+| POST | `/api/v1/users` | Create new user |
+| PATCH | `/api/v1/users/:slug` | Update user |
+| PATCH | `/api/v1/users/:id/disable` | Soft delete user |
+
+### Query Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `page` | 1 | Page number for pagination |
+| `per_page` | 20 | Items per page |
+
+## API Documentation
+
+Swagger UI is available at: **http://localhost:3000/api-docs**
+
+OpenAPI specification: `/api-docs/v1/swagger.yaml`
 
 ## Notes
 
 - The project name "Omni Ludum" suggests this may be a game-related application (Latin: "omni" = all, "ludum" = game/play)
 - Both backend and frontend are set up as boilerplate installations ready for development
 - The architecture supports API-driven development with clear separation between concerns
+- Soft delete pattern: users are never physically deleted, only marked as `is_disabled: true`
