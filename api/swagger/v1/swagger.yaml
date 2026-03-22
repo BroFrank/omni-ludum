@@ -160,6 +160,84 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/v1/users/{id}/update_theme:
+    patch:
+      summary: Update user theme
+      description: Updates the user's theme preference (light or dark)
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User slug identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateThemeRequest'
+      responses:
+        '200':
+          description: Theme updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid theme value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+
+  /api/v1/users/{id}/update_locale:
+    patch:
+      summary: Update user locale
+      description: Updates the user's locale preference (en or ru)
+      tags:
+        - Users
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User slug identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLocaleRequest'
+      responses:
+        '200':
+          description: Locale updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid locale value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+
 components:
   schemas:
     User:
@@ -182,6 +260,16 @@ components:
           enum: [SUPER_ADMIN, ADMIN, MODERATOR, REGULAR]
           description: User's role in the system
           example: "REGULAR"
+        theme:
+          type: string
+          enum: [light, dark]
+          description: User's theme preference
+          example: "light"
+        locale:
+          type: string
+          enum: [en, ru]
+          description: User's locale preference
+          example: "en"
         slug:
           type: string
           description: URL-friendly unique identifier
@@ -203,6 +291,8 @@ components:
         - username
         - email
         - role
+        - theme
+        - locale
         - slug
         - is_disabled
         - created_at
@@ -270,6 +360,36 @@ components:
               type: string
               enum: [SUPER_ADMIN, ADMIN, MODERATOR, REGULAR]
               example: "MODERATOR"
+            theme:
+              type: string
+              enum: [light, dark]
+              example: "dark"
+            locale:
+              type: string
+              enum: [en, ru]
+              example: "ru"
+
+    UpdateThemeRequest:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark]
+          description: Theme preference
+          example: "dark"
+      required:
+        - theme
+
+    UpdateLocaleRequest:
+      type: object
+      properties:
+        locale:
+          type: string
+          enum: [en, ru]
+          description: Locale preference
+          example: "ru"
+      required:
+        - locale
 
     ErrorResponse:
       type: object

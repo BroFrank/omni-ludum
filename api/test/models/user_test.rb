@@ -79,7 +79,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "email must be valid format" do
-    invalid_emails = ["invalid", "test@", "@example.com", ""]
+    invalid_emails = [ "invalid", "test@", "@example.com", "" ]
     invalid_emails.each do |invalid_email|
       user = User.new(@valid_user_attrs.merge(email: invalid_email))
       assert_not user.valid?, "Email '#{invalid_email}' should be invalid"
@@ -87,7 +87,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "email accepts valid formats" do
-    valid_emails = ["test@example.com", "user.name@domain.org", "user+tag@mail.co.uk"]
+    valid_emails = [ "test@example.com", "user.name@domain.org", "user+tag@mail.co.uk" ]
     valid_emails.each do |valid_email|
       user = User.new(@valid_user_attrs.merge(email: valid_email))
       assert user.valid?, "Email '#{valid_email}' should be valid"
@@ -295,5 +295,111 @@ class UserTest < ActiveSupport::TestCase
   test "role can be set explicitly" do
     user = User.create!(@valid_user_attrs.merge(role: USER_ROLES::ADMIN))
     assert_equal USER_ROLES::ADMIN, user.role
+  end
+
+  # ============================================
+  # Theme validations
+  # ============================================
+  test "theme defaults to light on creation" do
+    user = User.create!(@valid_user_attrs)
+    assert_equal USER_THEMES::LIGHT, user.theme
+  end
+
+  test "theme accepts light value" do
+    user = User.new(@valid_user_attrs.merge(theme: USER_THEMES::LIGHT))
+    assert user.valid?
+  end
+
+  test "theme accepts dark value" do
+    user = User.new(@valid_user_attrs.merge(theme: USER_THEMES::DARK))
+    assert user.valid?
+  end
+
+  test "theme does not accept invalid values" do
+    user = User.new(@valid_user_attrs.merge(theme: "invalid"))
+    assert_not user.valid?
+    assert_includes user.errors[:theme], "is invalid"
+  end
+
+  test "theme must be present" do
+    user = User.new(@valid_user_attrs.merge(theme: nil))
+    assert user.valid?
+    assert_equal USER_THEMES::LIGHT, user.theme
+  end
+
+  # ============================================
+  # Locale validations
+  # ============================================
+  test "locale defaults to en on creation" do
+    user = User.create!(@valid_user_attrs)
+    assert_equal USER_LOCALES::ENGLISH, user.locale
+  end
+
+  test "locale accepts en value" do
+    user = User.new(@valid_user_attrs.merge(locale: USER_LOCALES::ENGLISH))
+    assert user.valid?
+  end
+
+  test "locale accepts ru value" do
+    user = User.new(@valid_user_attrs.merge(locale: USER_LOCALES::RUSSIAN))
+    assert user.valid?
+  end
+
+  test "locale does not accept invalid values" do
+    user = User.new(@valid_user_attrs.merge(locale: "invalid"))
+    assert_not user.valid?
+    assert_includes user.errors[:locale], "is invalid"
+  end
+
+  test "locale must be present" do
+    user = User.new(@valid_user_attrs.merge(locale: nil))
+    assert user.valid?
+    assert_equal USER_LOCALES::ENGLISH, user.locale
+  end
+
+  # ============================================
+  # Instance methods for theme
+  # ============================================
+  test "light_theme? returns true for light theme" do
+    user = User.create!(@valid_user_attrs)
+    assert user.light_theme?
+  end
+
+  test "light_theme? returns false for dark theme" do
+    user = User.create!(@valid_user_attrs.merge(theme: USER_THEMES::DARK))
+    assert_not user.light_theme?
+  end
+
+  test "dark_theme? returns true for dark theme" do
+    user = User.create!(@valid_user_attrs.merge(theme: USER_THEMES::DARK))
+    assert user.dark_theme?
+  end
+
+  test "dark_theme? returns false for light theme" do
+    user = User.create!(@valid_user_attrs)
+    assert_not user.dark_theme?
+  end
+
+  # ============================================
+  # Scopes for theme and locale
+  # ============================================
+  test "with_theme filters users by theme" do
+    light_user = User.create!(@valid_user_attrs)
+    dark_user = User.create!(@valid_user_attrs.merge(username: "darkuser", email: "dark@example.com", theme: USER_THEMES::DARK))
+
+    assert_includes User.with_theme(USER_THEMES::LIGHT), light_user
+    assert_not_includes User.with_theme(USER_THEMES::LIGHT), dark_user
+    assert_includes User.with_theme(USER_THEMES::DARK), dark_user
+    assert_not_includes User.with_theme(USER_THEMES::DARK), light_user
+  end
+
+  test "with_locale filters users by locale" do
+    en_user = User.create!(@valid_user_attrs)
+    ru_user = User.create!(@valid_user_attrs.merge(username: "ruuser", email: "ru@example.com", locale: USER_LOCALES::RUSSIAN))
+
+    assert_includes User.with_locale(USER_LOCALES::ENGLISH), en_user
+    assert_not_includes User.with_locale(USER_LOCALES::ENGLISH), ru_user
+    assert_includes User.with_locale(USER_LOCALES::RUSSIAN), ru_user
+    assert_not_includes User.with_locale(USER_LOCALES::RUSSIAN), en_user
   end
 end

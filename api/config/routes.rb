@@ -15,6 +15,8 @@ Rails.application.routes.draw do
       resources :users, except: [ :destroy ] do
         member do
           patch :disable
+          patch :update_theme
+          patch :update_locale
         end
       end
     end

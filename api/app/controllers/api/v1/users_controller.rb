@@ -1,7 +1,7 @@
 module Api
   module V1
     class UsersController < BaseController
-      before_action :set_user, only: [ :show, :update, :disable ]
+      before_action :set_user, only: [ :show, :update, :disable, :update_theme, :update_locale ]
 
       def index
         @users = User.active.page(params[:page]).per(params[:per_page] || 20)
@@ -37,6 +37,22 @@ module Api
         end
       end
 
+      def update_theme
+        if @user.update(theme: theme_params[:theme])
+          render template: "api/v1/users/update", status: :ok
+        else
+          render json: { errors: @user.errors.full_messages }, status: :bad_request
+        end
+      end
+
+      def update_locale
+        if @user.update(locale: locale_params[:locale])
+          render template: "api/v1/users/update", status: :ok
+        else
+          render json: { errors: @user.errors.full_messages }, status: :bad_request
+        end
+      end
+
       private
 
       def set_user
@@ -45,7 +61,15 @@ module Api
       end
 
       def user_params
-        params.require(:user).permit(:username, :email, :password, :password_confirmation, :role)
+        params.require(:user).permit(:username, :email, :password, :password_confirmation, :role, :theme, :locale)
+      end
+
+      def theme_params
+        params.permit(:theme)
+      end
+
+      def locale_params
+        params.permit(:locale)
       end
     end
   end

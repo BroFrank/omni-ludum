@@ -230,6 +230,28 @@ USER_ROLES = {
 
 Default role: `REGULAR`
 
+### Themes (`USER_THEMES`)
+
+```ruby
+USER_THEMES = {
+  LIGHT: 'light',
+  DARK: 'dark'
+}
+```
+
+Default theme: `LIGHT`
+
+### Locales (`USER_LOCALES`)
+
+```ruby
+USER_LOCALES = {
+  ENGLISH: 'en',
+  RUSSIAN: 'ru'
+}
+```
+
+Default locale: `ENGLISH`
+
 ### Model Fields
 
 | Field | Type | Constraints |
@@ -239,6 +261,8 @@ Default role: `REGULAR`
 | `email` | string | Unique, valid email format |
 | `password_digest` | string | BCrypt encrypted |
 | `role` | string | One of USER_ROLES, default: REGULAR |
+| `theme` | string | One of USER_THEMES, default: light |
+| `locale` | string | One of USER_LOCALES, default: en |
 | `is_disabled` | boolean | Default: false (soft delete flag) |
 | `slug` | string | Unique, auto-generated from username |
 | `created_at` | datetime | Auto-generated |
@@ -264,12 +288,16 @@ Auto-generated from username:
 
 - `User.active` — returns users where `is_disabled: false`
 - `User.disabled` — returns users where `is_disabled: true`
+- `User.with_theme(theme)` — returns users with specified theme
+- `User.with_locale(locale)` — returns users with specified locale
 
 ### Instance Methods
 
 - `admin?` — true if role is SUPER_ADMIN or ADMIN
 - `moderator?` — true if role is SUPER_ADMIN, ADMIN, or MODERATOR
 - `regular?` — true if role is REGULAR
+- `light_theme?` — true if theme is LIGHT
+- `dark_theme?` — true if theme is DARK
 
 ### Class Methods
 
@@ -287,6 +315,8 @@ All endpoints are under `/api/v1` namespace.
 | POST | `/api/v1/users` | Create new user |
 | PATCH | `/api/v1/users/:slug` | Update user |
 | PATCH | `/api/v1/users/:id/disable` | Soft delete user |
+| PATCH | `/api/v1/users/:id/update_theme` | Update user theme (light/dark) |
+| PATCH | `/api/v1/users/:id/update_locale` | Update user locale (en/ru) |
 
 ### Query Parameters
 

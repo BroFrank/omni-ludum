@@ -237,4 +237,125 @@ class Api::V1::UsersControllerTest < ActionDispatch::IntegrationTest
     assert user1.reload.is_disabled
     assert_not user2.reload.is_disabled
   end
+
+  # ============================================
+  # PATCH /api/v1/users/:id/update_theme
+  # ============================================
+  test "PATCH /api/v1/users/:id/update_theme updates theme to dark" do
+    user = User.create!(@valid_user_attrs)
+
+    patch update_theme_api_v1_user_url(user.slug), params: { theme: USER_THEMES::DARK }, as: :json
+
+    assert_response :success
+    assert_equal USER_THEMES::DARK, json_response["theme"]
+  end
+
+  test "PATCH /api/v1/users/:id/update_theme updates theme to light" do
+    user = User.create!(@valid_user_attrs.merge(theme: USER_THEMES::DARK))
+
+    patch update_theme_api_v1_user_url(user.slug), params: { theme: USER_THEMES::LIGHT }, as: :json
+
+    assert_response :success
+    assert_equal USER_THEMES::LIGHT, json_response["theme"]
+  end
+
+  test "PATCH /api/v1/users/:id/update_theme returns 400 for invalid theme" do
+    user = User.create!(@valid_user_attrs)
+
+    patch update_theme_api_v1_user_url(user.slug), params: { theme: "invalid" }, as: :json
+
+    assert_response :bad_request
+    assert json_response["errors"]
+  end
+
+  test "PATCH /api/v1/users/:id/update_theme returns 404 for non-existent user" do
+    patch update_theme_api_v1_user_url("nonexistent"), params: { theme: USER_THEMES::DARK }, as: :json
+
+    assert_response :not_found
+  end
+
+  test "PATCH /api/v1/users/:id/update_theme returns 404 for disabled user" do
+    user = User.create!(@valid_user_attrs.merge(is_disabled: true))
+
+    patch update_theme_api_v1_user_url(user.slug), params: { theme: USER_THEMES::DARK }, as: :json
+
+    assert_response :not_found
+  end
+
+  # ============================================
+  # PATCH /api/v1/users/:id/update_locale
+  # ============================================
+  test "PATCH /api/v1/users/:id/update_locale updates locale to ru" do
+    user = User.create!(@valid_user_attrs)
+
+    patch update_locale_api_v1_user_url(user.slug), params: { locale: USER_LOCALES::RUSSIAN }, as: :json
+
+    assert_response :success
+    assert_equal USER_LOCALES::RUSSIAN, json_response["locale"]
+  end
+
+  test "PATCH /api/v1/users/:id/update_locale updates locale to en" do
+    user = User.create!(@valid_user_attrs.merge(locale: USER_LOCALES::RUSSIAN))
+
+    patch update_locale_api_v1_user_url(user.slug), params: { locale: USER_LOCALES::ENGLISH }, as: :json
+
+    assert_response :success
+    assert_equal USER_LOCALES::ENGLISH, json_response["locale"]
+  end
+
+  test "PATCH /api/v1/users/:id/update_locale returns 400 for invalid locale" do
+    user = User.create!(@valid_user_attrs)
+
+    patch update_locale_api_v1_user_url(user.slug), params: { locale: "invalid" }, as: :json
+
+    assert_response :bad_request
+    assert json_response["errors"]
+  end
+
+  test "PATCH /api/v1/users/:id/update_locale returns 404 for non-existent user" do
+    patch update_locale_api_v1_user_url("nonexistent"), params: { locale: USER_LOCALES::RUSSIAN }, as: :json
+
+    assert_response :not_found
+  end
+
+  test "PATCH /api/v1/users/:id/update_locale returns 404 for disabled user" do
+    user = User.create!(@valid_user_attrs.merge(is_disabled: true))
+
+    patch update_locale_api_v1_user_url(user.slug), params: { locale: USER_LOCALES::RUSSIAN }, as: :json
+
+    assert_response :not_found
+  end
+
+  # ============================================
+  # Existing endpoints with theme and locale
+  # ============================================
+  test "GET /api/v1/users/:id returns theme and locale fields" do
+    user = User.create!(@valid_user_attrs)
+
+    get api_v1_user_url(user.slug), as: :json
+
+    assert_response :success
+    assert_equal USER_THEMES::LIGHT, json_response["theme"]
+    assert_equal USER_LOCALES::ENGLISH, json_response["locale"]
+  end
+
+  test "POST /api/v1/users creates user with default theme and locale" do
+    post api_v1_users_url, params: { user: @valid_user_attrs }, as: :json
+
+    assert_response :created
+    assert_equal USER_THEMES::LIGHT, json_response["theme"]
+    assert_equal USER_LOCALES::ENGLISH, json_response["locale"]
+  end
+
+  test "PATCH /api/v1/users/:id can update theme and locale" do
+    user = User.create!(@valid_user_attrs)
+
+    patch api_v1_user_url(user.slug), params: {
+      user: { theme: USER_THEMES::DARK, locale: USER_LOCALES::RUSSIAN }
+    }, as: :json
+
+    assert_response :success
+    assert_equal USER_THEMES::DARK, json_response["theme"]
+    assert_equal USER_LOCALES::RUSSIAN, json_response["locale"]
+  end
 end

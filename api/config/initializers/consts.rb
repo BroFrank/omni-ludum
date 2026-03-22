@@ -6,3 +6,17 @@ module USER_ROLES
 
   ALL_ROLES = [ SUPER_ADMIN, ADMIN, MODERATOR, REGULAR ].freeze
 end
+
+module USER_THEMES
+  LIGHT = "light"
+  DARK = "dark"
+
+  ALL_THEMES = [ LIGHT, DARK ].freeze
+end
+
+module USER_LOCALES
+  ENGLISH = "en"
+  RUSSIAN = "ru"
+
+  ALL_LOCALES = [ ENGLISH, RUSSIAN ].freeze
+end

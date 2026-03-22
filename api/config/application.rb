@@ -31,6 +31,6 @@ module Api
 
     # Set default locale to English
     config.i18n.default_locale = :en
-    config.i18n.available_locales = [:en, :ru]
+    config.i18n.available_locales = [ :en, :ru ]
   end
 end

@@ -19,13 +19,23 @@ class User < ApplicationRecord
   validates :role, presence: true
   validates :role, inclusion: { in: USER_ROLES::ALL_ROLES, message: :invalid }
 
+  validates :theme, presence: true
+  validates :theme, inclusion: { in: USER_THEMES::ALL_THEMES, message: :invalid }
+
+  validates :locale, presence: true
+  validates :locale, inclusion: { in: USER_LOCALES::ALL_LOCALES, message: :invalid }
+
   validates :slug, uniqueness: { case_sensitive: false }
 
   before_validation :generate_slug
   before_validation :set_default_role
+  before_validation :set_default_theme
+  before_validation :set_default_locale
 
   scope :active, -> { where(is_disabled: false) }
   scope :disabled, -> { where(is_disabled: true) }
+  scope :with_theme, ->(theme) { where(theme: theme) }
+  scope :with_locale, ->(locale) { where(locale: locale) }
 
   def admin?
     [ USER_ROLES::SUPER_ADMIN, USER_ROLES::ADMIN ].include?(role)
@@ -37,6 +47,14 @@ class User < ApplicationRecord
 
   def regular?
     role == USER_ROLES::REGULAR
+  end
+
+  def light_theme?
+    theme == USER_THEMES::LIGHT
+  end
+
+  def dark_theme?
+    theme == USER_THEMES::DARK
   end
 
   def self.find_by_slug!(slug)
@@ -57,5 +75,13 @@ class User < ApplicationRecord
 
   def set_default_role
     self.role ||= USER_ROLES::REGULAR
+  end
+
+  def set_default_theme
+    self.theme ||= USER_THEMES::LIGHT
+  end
+
+  def set_default_locale
+    self.locale ||= USER_LOCALES::ENGLISH
   end
 end
