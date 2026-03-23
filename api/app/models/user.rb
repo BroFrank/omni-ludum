@@ -37,6 +37,8 @@ class User < ApplicationRecord
   scope :with_theme, ->(theme) { where(theme: theme) }
   scope :with_locale, ->(locale) { where(locale: locale) }
 
+  has_many :reviews, dependent: :nullify
+
   def admin?
     [ USER_ROLES::SUPER_ADMIN, USER_ROLES::ADMIN ].include?(role)
   end

@@ -64,4 +64,8 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Execute jobs immediately in test environment
+  config.active_job.queue_adapter = :test
+  config.active_job.perform_enqueued_at_once = true
 end

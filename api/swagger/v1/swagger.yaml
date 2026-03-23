@@ -390,6 +390,252 @@ paths:
               schema:
                 $ref: '#/components/schemas/GameErrorResponse'
 
+  /api/v1/reviews:
+    get:
+      summary: Get list of reviews
+      description: Returns a paginated list of reviews. Can be filtered by game_id or user_id
+      tags:
+        - Reviews
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: game_id
+          in: query
+          description: Filter by game name
+          required: false
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: Filter by user slug
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+    post:
+      summary: Create a new review
+      description: Creates a new review for a game by a user
+      tags:
+        - Reviews
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReviewRequest'
+      responses:
+        '201':
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewErrorResponse'
+
+  /api/v1/reviews/{id}:
+    get:
+      summary: Get review by ID
+      description: Returns a single review by its ID
+      tags:
+        - Reviews
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '404':
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewNotFoundError'
+    patch:
+      summary: Update review
+      description: Updates an existing review's rating, difficulty, or comment
+      tags:
+        - Reviews
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReviewRequest'
+      responses:
+        '200':
+          description: Review updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '404':
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewErrorResponse'
+    delete:
+      summary: Delete review (soft delete)
+      description: Sets the review's is_disabled flag to true (soft delete)
+      tags:
+        - Reviews
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Review ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Review deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Review successfully deleted"
+        '404':
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewNotFoundError'
+
+  /api/v1/games/{game_id}/reviews:
+    get:
+      summary: Get reviews for a game
+      description: Returns a paginated list of reviews for a specific game
+      tags:
+        - Reviews
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: Game name identifier
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameNotFoundError'
+
+  /api/v1/users/{user_id}/reviews:
+    get:
+      summary: Get reviews by a user
+      description: Returns a paginated list of reviews by a specific user
+      tags:
+        - Reviews
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User slug identifier
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserNotFoundError'
+
 components:
   schemas:
     User:
@@ -733,3 +979,128 @@ components:
               type: integer
               description: ID of the original game (for DLCs/mods)
               example: 1
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique review ID
+          example: 1
+        user_id:
+          type: integer
+          description: ID of the user who wrote the review
+          example: 1
+        game_id:
+          type: integer
+          description: ID of the game being reviewed
+          example: 1
+        rating:
+          type: integer
+          description: User's rating (0-10)
+          minimum: 0
+          maximum: 10
+          example: 8
+        difficulty:
+          type: integer
+          description: User's difficulty rating (0-10)
+          minimum: 0
+          maximum: 10
+          example: 5
+        comment:
+          type: string
+          description: Optional review comment
+          example: "Great game!"
+        is_disabled:
+          type: boolean
+          description: Whether the review is disabled (soft delete)
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Review creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Review update timestamp
+      required:
+        - id
+        - user_id
+        - game_id
+        - rating
+        - difficulty
+        - is_disabled
+        - created_at
+        - updated_at
+
+    CreateReviewRequest:
+      type: object
+      properties:
+        review:
+          type: object
+          properties:
+            user_id:
+              type: integer
+              description: ID of the user
+              example: 1
+            game_id:
+              type: integer
+              description: ID of the game
+              example: 1
+            rating:
+              type: integer
+              minimum: 0
+              maximum: 10
+              description: Rating from 0 to 10
+              example: 8
+            difficulty:
+              type: integer
+              minimum: 0
+              maximum: 10
+              description: Difficulty rating from 0 to 10
+              example: 5
+            comment:
+              type: string
+              description: Optional comment (max 10000 characters)
+              example: "Great game!"
+          required:
+            - user_id
+            - game_id
+            - rating
+            - difficulty
+
+    UpdateReviewRequest:
+      type: object
+      properties:
+        review:
+          type: object
+          properties:
+            rating:
+              type: integer
+              minimum: 0
+              maximum: 10
+              description: Rating from 0 to 10
+              example: 9
+            difficulty:
+              type: integer
+              minimum: 0
+              maximum: 10
+              description: Difficulty rating from 0 to 10
+              example: 6
+            comment:
+              type: string
+              description: Optional comment (max 10000 characters)
+              example: "Updated review"
+
+    ReviewErrorResponse:
+      type: array
+      items:
+        type: string
+      example: ["Rating must be between 0 and 10", "User has already reviewed this game"]
+
+    ReviewNotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Review not found"

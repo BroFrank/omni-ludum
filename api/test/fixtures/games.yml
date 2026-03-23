@@ -1,0 +1,17 @@
+one:
+  name: Test Game One
+  release_year: 2020
+  rating_avg: 7.5
+  difficulty_avg: 5.0
+  is_dlc: false
+  is_mod: false
+  is_disabled: false
+
+two:
+  name: Test Game Two
+  release_year: 2021
+  rating_avg: 8.0
+  difficulty_avg: 6.0
+  is_dlc: false
+  is_mod: false
+  is_disabled: false

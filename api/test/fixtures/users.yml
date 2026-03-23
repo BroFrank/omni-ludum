@@ -1,0 +1,19 @@
+one:
+  username: testuser1
+  email: test1@example.com
+  password_digest: <%= BCrypt::Password.create('Password123!') %>
+  role: REGULAR
+  theme: light
+  locale: en
+  slug: testuser1
+  is_disabled: false
+
+two:
+  username: testuser2
+  email: test2@example.com
+  password_digest: <%= BCrypt::Password.create('Password123!') %>
+  role: REGULAR
+  theme: light
+  locale: en
+  slug: testuser2
+  is_disabled: false

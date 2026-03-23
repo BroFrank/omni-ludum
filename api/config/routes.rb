@@ -25,6 +25,17 @@ Rails.application.routes.draw do
           patch :disable
         end
       end
+
+      resources :reviews, except: [:new, :edit]
+      
+      # Nested routes for convenience
+      resources :games, only: [] do
+        resources :reviews, only: [:index, :create], param: :game_name
+      end
+      
+      resources :users, only: [] do
+        resources :reviews, only: [:index], param: :user_slug
+      end
     end
   end
 end

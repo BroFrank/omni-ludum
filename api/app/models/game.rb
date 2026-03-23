@@ -1,6 +1,7 @@
 class Game < ApplicationRecord
   belongs_to :base_game, class_name: "Game", optional: true
   has_many :dlcs, class_name: "Game", foreign_key: :base_game_id
+  has_many :reviews, dependent: :nullify
 
   validates :name, presence: true
   validates :name, uniqueness: { case_sensitive: false }

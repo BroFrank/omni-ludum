@@ -164,6 +164,19 @@ npm run lint              # ESLint
 | `rails test` | Run test suite |
 | `rubocop` | Run linter |
 | `brakeman` | Security scan |
+| `bin/rails solid_queue:start` | Start Solid Queue worker |
+
+### Makefile
+| Command | Description |
+|---------|-------------|
+| `make db-up` | Start PostgreSQL container in background |
+| `make db-down` | Stop PostgreSQL container |
+| `make db-console` | Open psql console for database queries |
+| `make db-logs` | View database logs (follow mode) |
+| `make db-restart` | Restart PostgreSQL container |
+| `make api-dev` | Start Rails development server |
+| `make api-queue` | Start Solid Queue worker |
+| `make api-dev-all` | Start Rails server and Solid Queue (requires foreman) |
 
 ### Frontend
 | Command | Description |
@@ -209,9 +222,10 @@ npm run lint              # ESLint
 
 ## Current State
 
-- **Backend**: User and Game models implemented with full CRUD API
+- **Backend**: User, Game, and Review models implemented with full CRUD API
 - **Frontend**: Basic SvelteKit structure with Tailwind CSS
 - **Documentation**: Swagger UI available at `/api-docs`
+- **Background Jobs**: Solid Queue configured for async job processing
 
 ## User Entity
 
@@ -353,6 +367,109 @@ Games can reference other games via `base_game_id`:
 - `Game.find_by_name!(name)` — find active game by name (raises error if not found)
 - `Game.find_by_name(name)` — find active game by name (returns nil if not found)
 
+## Review Entity
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique review ID |
+| `user_id` | bigint | FK → users.id, required, indexed | User who wrote the review |
+| `game_id` | bigint | FK → games.id, required, indexed | Game being reviewed |
+| `rating` | integer | 0-10, required | User's rating (0-10) |
+| `difficulty` | integer | 0-10, required | User's difficulty rating (0-10) |
+| `comment` | text | max 10000 chars, optional | Review comment |
+| `is_disabled` | boolean | Default: false | Soft delete flag |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Associations
+
+- `belongs_to :user` — associated user
+- `belongs_to :game` — associated game
+
+### Scopes
+
+- `Review.active` — returns reviews where `is_disabled: false`
+- `Review.disabled` — returns reviews where `is_disabled: true`
+
+### Unique Constraint
+
+A user can only have one active review per game (enforced by unique partial index on `[:user_id, :game_id]` where `is_disabled = false`).
+
+### Callbacks
+
+- `after_create` — automatically enqueues game rating recalculation job
+- `after_update` — enqueues recalculation if rating, difficulty, or is_disabled changed
+- `after_destroy` — enqueues recalculation job
+
+## Background Jobs: Rating Recalculation
+
+### Overview
+
+Game ratings (`rating_avg` and `difficulty_avg`) are recalculated asynchronously using Solid Queue. When a review is created, updated, or deleted, a job is enqueued to recalculate the averages for the associated game.
+
+### Components
+
+**Solid Queue**: Official Rails background job processor using PostgreSQL as backend.
+
+**GameRatingRecalculationService**: Service class that handles:
+- `enqueue(game_id)` — adds a game to the recalculation queue (prevents duplicates)
+- `enqueue_bulk(game_ids)` — adds multiple games to the queue
+- `process_pending` — processes all pending recalculations
+- `cleanup_old(days_old: 7)` — removes old completed recalculation records
+
+**GameRatingRecalculationJob**: Job that performs the actual recalculation for a single game.
+
+**ProcessPendingRecalculationsJob**: Scheduled job that runs every 5 minutes to process pending recalculations.
+
+**CleanupOldRecalculationsJob**: Scheduled job that runs daily at 3 AM to clean up old records.
+
+### Recalculation Table
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | bigint | Primary key |
+| `game_id` | bigint | FK → games.id |
+| `scheduled_at` | datetime | When the recalculation was scheduled |
+| `processed_at` | datetime | When the recalculation was completed |
+| `status` | string | pending, processing, completed, failed |
+| `error_message` | text | Error message if failed |
+
+### Scheduled Tasks (config/recurring.yml)
+
+```yaml
+development:
+  process_pending_recalculations:
+    class: ProcessPendingRecalculationsJob
+    schedule: every 5 minutes
+
+  cleanup_old_recalculations:
+    class: CleanupOldRecalculationsJob
+    schedule: at 3am every day
+```
+
+### Running Background Jobs
+
+**Start Solid Queue worker:**
+```bash
+cd api && bin/rails solid_queue:start
+# or
+make api-queue
+```
+
+**Start Rails server and Solid Queue together (requires foreman):**
+```bash
+cd api && foreman start -f Procfile.dev
+# or from project root
+make api-dev-all
+```
+
+**Install foreman:**
+```bash
+gem install foreman
+```
+
 ## API Endpoints
 
 All endpoints are under `/api/v1` namespace.
@@ -378,6 +495,18 @@ All endpoints are under `/api/v1` namespace.
 | POST | `/api/v1/games` | Create new game |
 | PATCH | `/api/v1/games/:name` | Update game |
 | PATCH | `/api/v1/games/:id/disable` | Soft delete game |
+
+### Reviews API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/reviews` | List all reviews (paginated) |
+| GET | `/api/v1/reviews/:id` | Get review by ID |
+| POST | `/api/v1/reviews` | Create new review |
+| PATCH | `/api/v1/reviews/:id` | Update review |
+| DELETE | `/api/v1/reviews/:id` | Soft delete review |
+| GET | `/api/v1/games/:game_id/reviews` | List reviews for a game (paginated) |
+| GET | `/api/v1/users/:user_id/reviews` | List reviews by a user (paginated) |
 
 ### Query Parameters
 
