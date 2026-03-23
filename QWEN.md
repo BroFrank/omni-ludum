@@ -209,7 +209,7 @@ npm run lint              # ESLint
 
 ## Current State
 
-- **Backend**: User model implemented with full CRUD API
+- **Backend**: User and Game models implemented with full CRUD API
 - **Frontend**: Basic SvelteKit structure with Tailwind CSS
 - **Documentation**: Swagger UI available at `/api-docs`
 
@@ -304,9 +304,60 @@ Auto-generated from username:
 - `User.find_by_slug!(slug)` — find active user by slug (raises error if not found)
 - `User.find_by_slug(slug)` — find active user by slug (returns nil if not found)
 
+## Game Entity
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique game ID |
+| `name` | string | Required, unique (case-insensitive), indexed | Game name |
+| `release_year` | integer | 1970-2100, indexed | Year of release |
+| `rating_avg` | float | 0-10 | Average user rating (future: calculated) |
+| `difficulty_avg` | float | 0-10 | Average difficulty rating (future: calculated) |
+| `playtime_avg` | integer | >= 0 (minutes) | Average playtime (future: calculated) |
+| `playtime_100_avg` | integer | >= 0 (minutes) | Average 100% completion time (future: calculated) |
+| `is_dlc` | boolean | Default: false | DLC flag |
+| `is_mod` | boolean | Default: false | Mod/room hack flag |
+| `is_disabled` | boolean | Default: false | Soft delete flag |
+| `base_game_id` | bigint | FK → games.id, nullable | Reference to original game |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Self-Referencing Association
+
+Games can reference other games via `base_game_id`:
+- Used for DLCs, mods, and room hacks to link to their original game
+- Foreign key constraint ensures referential integrity
+- When base game is soft deleted, `base_game_id` should be set to NULL (manual handling)
+
+### Scopes
+
+- `Game.active` — returns games where `is_disabled: false`
+- `Game.disabled` — returns games where `is_disabled: true`
+- `Game.with_base_game` — returns games with `base_game_id` present
+- `Game.without_base_game` — returns games with `base_game_id` NULL
+- `Game.dlcs` — returns games where `is_dlc: true`
+- `Game.mods` — returns games where `is_mod: true`
+- `Game.original_games` — returns games where both `is_dlc` and `is_mod` are false
+
+### Instance Methods
+
+- `dlc?` — true if `is_dlc` is true
+- `mod?` — true if `is_mod` is true
+- `original_game?` — true if both `is_dlc` and `is_mod` are false
+- `base_game` — returns associated base game or self if no base_game_id
+
+### Class Methods
+
+- `Game.find_by_name!(name)` — find active game by name (raises error if not found)
+- `Game.find_by_name(name)` — find active game by name (returns nil if not found)
+
 ## API Endpoints
 
 All endpoints are under `/api/v1` namespace.
+
+### Users API
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -317,6 +368,16 @@ All endpoints are under `/api/v1` namespace.
 | PATCH | `/api/v1/users/:id/disable` | Soft delete user |
 | PATCH | `/api/v1/users/:id/update_theme` | Update user theme (light/dark) |
 | PATCH | `/api/v1/users/:id/update_locale` | Update user locale (en/ru) |
+
+### Games API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/games` | List active games (paginated) |
+| GET | `/api/v1/games/:name` | Get game by name |
+| POST | `/api/v1/games` | Create new game |
+| PATCH | `/api/v1/games/:name` | Update game |
+| PATCH | `/api/v1/games/:id/disable` | Soft delete game |
 
 ### Query Parameters
 
@@ -329,11 +390,100 @@ All endpoints are under `/api/v1` namespace.
 
 Swagger UI is available at: **http://localhost:3000/api-docs**
 
-OpenAPI specification: `/api-docs/v1/swagger.yaml`
+OpenAPI specification: `api/swagger/v1/swagger.yaml`
+
+## Swagger Documentation Rules
+
+When modifying or extending the Swagger/OpenAPI documentation (`api/swagger/v1/swagger.yaml`), follow these rules:
+
+### 1. Resource-Specific Error Schemas
+
+**NEVER** use generic error schemas like `ErrorResponse` or `NotFoundError` for multiple resources.
+
+**ALWAYS** create resource-specific error schemas:
+
+```yaml
+# ✅ Correct
+UserErrorResponse:
+  example: ["Email has already been taken", "Password is too short"]
+
+GameErrorResponse:
+  example: ["Name has already been taken", "Release year is out of valid range"]
+
+UserNotFoundError:
+  example: "User not found"
+
+GameNotFoundError:
+  example: "Game not found"
+```
+
+```yaml
+# ❌ Wrong - generic schema used for all resources
+ErrorResponse:
+  example: ["Email has already been taken"]  # Wrong for games!
+
+NotFoundError:
+  example: "User not found"  # Wrong for games!
+```
+
+### 2. Schema Naming Convention
+
+Use the pattern: `{Resource}{ErrorType}`
+
+| Error Type | Schema Name Pattern | Example |
+|------------|---------------------|---------|
+| Validation errors (422) | `{Resource}ErrorResponse` | `UserErrorResponse`, `GameErrorResponse` |
+| Not found errors (404) | `{Resource}NotFoundError` | `UserNotFoundError`, `GameNotFoundError` |
+| Bad request errors (400) | `{Resource}BadRequestError` | `UserBadRequestError` |
+
+### 3. Endpoint Response References
+
+Each endpoint must reference its own resource-specific error schemas:
+
+```yaml
+# Users endpoints → User* schemas
+/api/v1/users:
+  post:
+    responses:
+      '422':
+        schema:
+          $ref: '#/components/schemas/UserErrorResponse'
+      '404':
+        schema:
+          $ref: '#/components/schemas/UserNotFoundError'
+
+# Games endpoints → Game* schemas
+/api/v1/games:
+  post:
+    responses:
+      '422':
+        schema:
+          $ref: '#/components/schemas/GameErrorResponse'
+      '404':
+        schema:
+          $ref: '#/components/schemas/GameNotFoundError'
+```
+
+### 4. Error Message Examples
+
+Error examples must be relevant to the resource's validation rules:
+
+- **Users**: email, password, username validation
+- **Games**: name, release_year, rating validation
+
+### 5. Checklist Before Committing
+
+- [ ] All error responses use resource-specific schemas
+- [ ] Error examples match the resource's validation rules
+- [ ] No generic `ErrorResponse` or `NotFoundError` schemas exist
+- [ ] All endpoints reference the correct schemas
+- [ ] Swagger UI displays correct examples for all endpoints
 
 ## Notes
 
 - The project name "Omni Ludum" suggests this may be a game-related application (Latin: "omni" = all, "ludum" = game/play)
 - Both backend and frontend are set up as boilerplate installations ready for development
 - The architecture supports API-driven development with clear separation between concerns
-- Soft delete pattern: users are never physically deleted, only marked as `is_disabled: true`
+- Soft delete pattern: records are never physically deleted, only marked as `is_disabled: true`
+- Games use self-referencing foreign key for DLC/mod relationships
+- Games are looked up by `name` (not slug) for simplicity

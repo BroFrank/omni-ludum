@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: Omni Ludum API - Users
-  description: API documentation for User management endpoints
+  title: Omni Ludum API
+  description: API documentation for Omni Ludum application
   version: 1.0.0
 servers:
   - url: http://localhost:3000
@@ -61,7 +61,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UserErrorResponse'
 
   /api/v1/users/{slug}:
     get:
@@ -88,7 +88,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundError'
+                $ref: '#/components/schemas/UserNotFoundError'
     patch:
       summary: Update user
       description: Updates an existing user's details
@@ -119,13 +119,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundError'
+                $ref: '#/components/schemas/UserNotFoundError'
         '422':
           description: Validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UserErrorResponse'
 
   /api/v1/users/{id}/disable:
     patch:
@@ -152,13 +152,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundError'
+                $ref: '#/components/schemas/UserNotFoundError'
         '422':
           description: Validation error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UserErrorResponse'
 
   /api/v1/users/{id}/update_theme:
     patch:
@@ -191,13 +191,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UserErrorResponse'
         '404':
           description: User not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundError'
+                $ref: '#/components/schemas/UserNotFoundError'
 
   /api/v1/users/{id}/update_locale:
     patch:
@@ -230,13 +230,165 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UserErrorResponse'
         '404':
           description: User not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundError'
+                $ref: '#/components/schemas/UserNotFoundError'
+
+  /api/v1/games:
+    get:
+      summary: Get list of active games
+      description: Returns a paginated list of active (non-disabled) games
+      tags:
+        - Games
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Game'
+    post:
+      summary: Create a new game
+      description: Creates a new game with the provided details
+      tags:
+        - Games
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameRequest'
+      responses:
+        '201':
+          description: Game created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameErrorResponse'
+
+  /api/v1/games/{name}:
+    get:
+      summary: Get game by name
+      description: Returns a single active game by its name
+      tags:
+        - Games
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Unique name of the game
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameNotFoundError'
+    patch:
+      summary: Update game
+      description: Updates an existing game's details
+      tags:
+        - Games
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Unique name of the game
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGameRequest'
+      responses:
+        '200':
+          description: Game updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameErrorResponse'
+
+  /api/v1/games/{id}/disable:
+    patch:
+      summary: Disable game (soft delete)
+      description: Sets the game's is_disabled flag to true (soft delete)
+      tags:
+        - Games
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Game name identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Game disabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Game'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameErrorResponse'
 
 components:
   schemas:
@@ -391,7 +543,7 @@ components:
       required:
         - locale
 
-    ErrorResponse:
+    UserErrorResponse:
       type: object
       properties:
         errors:
@@ -401,10 +553,183 @@ components:
           description: List of validation error messages
           example: ["Email has already been taken", "Password is too short (minimum is 7 characters)"]
 
-    NotFoundError:
+    GameErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of validation error messages
+          example: ["Name has already been taken", "Release year is out of valid range"]
+
+    UserNotFoundError:
       type: object
       properties:
         error:
           type: string
           description: Error message
           example: "User not found"
+
+    GameNotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Game not found"
+
+    Game:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique game ID
+        name:
+          type: string
+          description: Game name
+          example: "The Witcher 3: Wild Hunt"
+        release_year:
+          type: integer
+          description: Year of release
+          example: 2015
+        rating_avg:
+          type: number
+          format: float
+          description: Average user rating (0-10)
+          example: 9.5
+        difficulty_avg:
+          type: number
+          format: float
+          description: Average difficulty rating (0-10)
+          example: 6.0
+        playtime_avg:
+          type: integer
+          description: Average playtime in minutes
+          example: 120
+        playtime_100_avg:
+          type: integer
+          description: Average time to 100% completion in minutes
+          example: 360
+        is_dlc:
+          type: boolean
+          description: Whether this is a DLC
+          example: false
+        is_mod:
+          type: boolean
+          description: Whether this is a mod/room hack
+          example: false
+        is_disabled:
+          type: boolean
+          description: Whether the game is disabled (soft delete)
+          example: false
+        base_game_id:
+          type: integer
+          description: ID of the original game (for DLCs/mods)
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - is_dlc
+        - is_mod
+        - is_disabled
+        - created_at
+        - updated_at
+
+    CreateGameRequest:
+      type: object
+      properties:
+        game:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Game name
+              example: "New Game"
+            release_year:
+              type: integer
+              description: Year of release
+              example: 2024
+            rating_avg:
+              type: number
+              format: float
+              description: Average user rating (0-10)
+              example: 8.0
+            difficulty_avg:
+              type: number
+              format: float
+              description: Average difficulty rating (0-10)
+              example: 5.0
+            playtime_avg:
+              type: integer
+              description: Average playtime in minutes
+              example: 120
+            playtime_100_avg:
+              type: integer
+              description: Average time to 100% completion in minutes
+              example: 360
+            is_dlc:
+              type: boolean
+              description: Whether this is a DLC
+              example: false
+            is_mod:
+              type: boolean
+              description: Whether this is a mod/room hack
+              example: false
+            base_game_id:
+              type: integer
+              description: ID of the original game (for DLCs/mods)
+              example: 1
+          required:
+            - name
+
+    UpdateGameRequest:
+      type: object
+      properties:
+        game:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Game name
+              example: "Updated Game"
+            release_year:
+              type: integer
+              description: Year of release
+              example: 2025
+            rating_avg:
+              type: number
+              format: float
+              description: Average user rating (0-10)
+              example: 9.0
+            difficulty_avg:
+              type: number
+              format: float
+              description: Average difficulty rating (0-10)
+              example: 6.5
+            playtime_avg:
+              type: integer
+              description: Average playtime in minutes
+              example: 150
+            playtime_100_avg:
+              type: integer
+              description: Average time to 100% completion in minutes
+              example: 400
+            is_dlc:
+              type: boolean
+              description: Whether this is a DLC
+              example: true
+            is_mod:
+              type: boolean
+              description: Whether this is a mod/room hack
+              example: false
+            base_game_id:
+              type: integer
+              description: ID of the original game (for DLCs/mods)
+              example: 1

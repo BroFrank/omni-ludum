@@ -12,11 +12,17 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      resources :users, except: [ :destroy ] do
+      resources :users, except: [:destroy] do
         member do
           patch :disable
           patch :update_theme
           patch :update_locale
+        end
+      end
+
+      resources :games, except: [:destroy] do
+        member do
+          patch :disable
         end
       end
     end
