@@ -636,6 +636,252 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserNotFoundError'
 
+  /api/v1/users_playtimes:
+    get:
+      summary: Get list of users playtimes
+      description: Returns a paginated list of users playtimes. Can be filtered by game_id or user_id
+      tags:
+        - Users Playtimes
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: game_id
+          in: query
+          description: Filter by game name
+          required: false
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          description: Filter by user slug
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UsersPlaytime'
+    post:
+      summary: Create a new users playtime
+      description: Creates a new playtime record for a game by a user
+      tags:
+        - Users Playtimes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUsersPlaytimeRequest'
+      responses:
+        '201':
+          description: Users playtime created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersPlaytime'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersPlaytimeErrorResponse'
+
+  /api/v1/users_playtimes/{id}:
+    get:
+      summary: Get users playtime by ID
+      description: Returns a single users playtime record by its ID
+      tags:
+        - Users Playtimes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Users playtime ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersPlaytime'
+        '404':
+          description: Users playtime not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersPlaytimeNotFoundError'
+    patch:
+      summary: Update users playtime
+      description: Updates an existing users playtime record
+      tags:
+        - Users Playtimes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Users playtime ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUsersPlaytimeRequest'
+      responses:
+        '200':
+          description: Users playtime updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersPlaytime'
+        '404':
+          description: Users playtime not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersPlaytimeNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersPlaytimeErrorResponse'
+    delete:
+      summary: Delete users playtime (soft delete)
+      description: Sets the users playtime is_disabled flag to true (soft delete)
+      tags:
+        - Users Playtimes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Users playtime ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Users playtime deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Users playtime successfully deleted"
+        '404':
+          description: Users playtime not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersPlaytimeNotFoundError'
+
+  /api/v1/games/{game_id}/users_playtimes:
+    get:
+      summary: Get users playtimes for a game
+      description: Returns a paginated list of users playtimes for a specific game
+      tags:
+        - Users Playtimes
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: Game name identifier
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UsersPlaytime'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameNotFoundError'
+
+  /api/v1/users/{user_id}/users_playtimes:
+    get:
+      summary: Get users playtimes by a user
+      description: Returns a paginated list of users playtimes by a specific user
+      tags:
+        - Users Playtimes
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User slug identifier
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UsersPlaytime'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserNotFoundError'
+
 components:
   schemas:
     User:
@@ -1104,3 +1350,97 @@ components:
         error:
           type: string
           example: "Review not found"
+
+    UsersPlaytime:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique users playtime ID
+          example: 1
+        user_id:
+          type: integer
+          description: ID of the user who recorded the playtime
+          example: 1
+        game_id:
+          type: integer
+          description: ID of the game
+          example: 1
+        minutes_regular:
+          type: integer
+          description: Time to complete the game in minutes
+          example: 120
+        minutes_100:
+          type: integer
+          description: Time to 100% complete the game in minutes
+          example: 360
+        is_disabled:
+          type: boolean
+          description: Whether the record is disabled (soft delete)
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Record update timestamp
+      required:
+        - id
+        - user_id
+        - game_id
+        - is_disabled
+        - created_at
+        - updated_at
+
+    CreateUsersPlaytimeRequest:
+      type: object
+      properties:
+        users_playtime:
+          type: object
+          properties:
+            user_id:
+              type: integer
+              description: ID of the user
+              example: 1
+            game_id:
+              type: integer
+              description: ID of the game
+              example: 1
+            minutes_regular:
+              type: integer
+              description: Time to complete the game in minutes
+              example: 120
+            minutes_100:
+              type: integer
+              description: Time to 100% complete the game in minutes
+              example: 360
+
+    UpdateUsersPlaytimeRequest:
+      type: object
+      properties:
+        users_playtime:
+          type: object
+          properties:
+            minutes_regular:
+              type: integer
+              description: Time to complete the game in minutes
+              example: 150
+            minutes_100:
+              type: integer
+              description: Time to 100% complete the game in minutes
+              example: 400
+
+    UsersPlaytimeErrorResponse:
+      type: array
+      items:
+        type: string
+      example: ["User has already recorded playtime for this game", "Minutes regular must be greater than or equal to 0"]
+
+    UsersPlaytimeNotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Users playtime not found"

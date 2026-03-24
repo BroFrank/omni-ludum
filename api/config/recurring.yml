@@ -25,5 +25,15 @@ development:
     queue: default
     schedule: at 3am every day
 
+  process_pending_playtime_recalculations:
+    class: ProcessPendingPlaytimeRecalculationsJob
+    queue: default
+    schedule: every 5 minutes
+
+  cleanup_old_playtime_recalculations:
+    class: CleanupOldPlaytimeRecalculationsJob
+    queue: default
+    schedule: at 3am every day
+
 test:
   <<: *default

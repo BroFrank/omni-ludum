@@ -38,6 +38,7 @@ class User < ApplicationRecord
   scope :with_locale, ->(locale) { where(locale: locale) }
 
   has_many :reviews, dependent: :nullify
+  has_many :users_playtimes, dependent: :nullify
 
   def admin?
     [ USER_ROLES::SUPER_ADMIN, USER_ROLES::ADMIN ].include?(role)

@@ -12,7 +12,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      resources :users, except: [:destroy] do
+      resources :users, except: [ :destroy ] do
         member do
           patch :disable
           patch :update_theme
@@ -20,21 +20,24 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :games, except: [:destroy] do
+      resources :games, except: [ :destroy ] do
         member do
           patch :disable
         end
       end
 
-      resources :reviews, except: [:new, :edit]
-      
-      # Nested routes for convenience
+      resources :reviews, except: [ :new, :edit ]
+
+      resources :users_playtimes, except: [ :new, :edit ]
+
       resources :games, only: [] do
-        resources :reviews, only: [:index, :create], param: :game_name
+        resources :reviews, only: [ :index, :create ], param: :game_name
+        resources :users_playtimes, only: [ :index, :create ], param: :game_name
       end
-      
+
       resources :users, only: [] do
-        resources :reviews, only: [:index], param: :user_slug
+        resources :reviews, only: [ :index ], param: :user_slug
+        resources :users_playtimes, only: [ :index ], param: :user_slug
       end
     end
   end

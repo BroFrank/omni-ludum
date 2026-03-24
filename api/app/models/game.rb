@@ -2,6 +2,7 @@ class Game < ApplicationRecord
   belongs_to :base_game, class_name: "Game", optional: true
   has_many :dlcs, class_name: "Game", foreign_key: :base_game_id
   has_many :reviews, dependent: :nullify
+  has_many :users_playtimes, dependent: :nullify
 
   validates :name, presence: true
   validates :name, uniqueness: { case_sensitive: false }
@@ -42,5 +43,24 @@ class Game < ApplicationRecord
 
   def self.find_by_name(name)
     active.find_by(name: name)
+  end
+
+  def recalculate_playtime_avg
+    active_playtimes = users_playtimes.active
+
+    if active_playtimes.exists?
+      playtime_avg_value = active_playtimes.average(:minutes_regular)
+      playtime_100_avg_value = active_playtimes.average(:minutes_100)
+
+      update!(
+        playtime_avg: playtime_avg_value&.to_i,
+        playtime_100_avg: playtime_100_avg_value&.to_i
+      )
+    else
+      update!(
+        playtime_avg: nil,
+        playtime_100_avg: nil
+      )
+    end
   end
 end

@@ -222,10 +222,10 @@ npm run lint              # ESLint
 
 ## Current State
 
-- **Backend**: User, Game, and Review models implemented with full CRUD API
+- **Backend**: User, Game, Review, and UsersPlaytime models implemented with full CRUD API
 - **Frontend**: Basic SvelteKit structure with Tailwind CSS
 - **Documentation**: Swagger UI available at `/api-docs`
-- **Background Jobs**: Solid Queue configured for async job processing
+- **Background Jobs**: Solid Queue configured for async job processing (rating and playtime recalculation)
 
 ## User Entity
 
@@ -403,6 +403,141 @@ A user can only have one active review per game (enforced by unique partial inde
 - `after_update` — enqueues recalculation if rating, difficulty, or is_disabled changed
 - `after_destroy` — enqueues recalculation job
 
+## UsersPlaytime Entity
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique users playtime ID |
+| `user_id` | bigint | FK → users.id, required, indexed | User who recorded the playtime |
+| `game_id` | bigint | FK → games.id, required, indexed | Game being recorded |
+| `minutes_regular` | integer | >= 0, nullable | Time to complete the game in minutes |
+| `minutes_100` | integer | >= 0, nullable | Time to 100% complete the game in minutes |
+| `is_disabled` | boolean | Default: false | Soft delete flag |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Associations
+
+- `belongs_to :user` — associated user
+- `belongs_to :game` — associated game
+
+### Scopes
+
+- `UsersPlaytime.active` — returns playtimes where `is_disabled: false`
+- `UsersPlaytime.disabled` — returns playtimes where `is_disabled: true`
+
+### Unique Constraint
+
+A user can only have one active playtime record per game (enforced by unique partial index on `[:user_id, :game_id]` where `is_disabled = false`).
+
+### Callbacks
+
+- `after_create` — automatically enqueues game playtime recalculation job
+- `after_update` — enqueues recalculation if minutes_regular, minutes_100, or is_disabled changed
+- `after_destroy` — enqueues recalculation job
+
+### Class Methods
+
+- `UsersPlaytime.find_by_user_and_game(user_id, game_id)` — find active playtime by user and game (returns nil if not found)
+
+## UsersPlaytimeRecalculation Entity
+
+### Overview
+
+Tracks pending playtime recalculation tasks for games. Used by `UsersPlaytimeRecalculationService` to prevent duplicate recalculation requests.
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique recalculation ID |
+| `game_id` | bigint | FK → games.id, required | Game to recalculate |
+| `scheduled_at` | datetime | Required | When the recalculation was scheduled |
+| `processed_at` | datetime | Nullable | When the recalculation was completed |
+| `status` | string | Required: pending, processing, completed, failed | Current status |
+| `error_message` | text | Nullable | Error message if failed |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Scopes
+
+- `pending` — where `status: 'pending'`
+- `processing` — where `status: 'processing'`
+- `completed` — where `status: 'completed'`
+- `failed` — where `status: 'failed'`
+- `for_processing` — pending recalculations where `scheduled_at <= Time.current`
+
+### Unique Constraint
+
+Only one pending recalculation per game (enforced by unique partial index on `[:game_id, :status]` where `status = 'pending'`).
+
+## Background Jobs: Playtime Recalculation
+
+### Overview
+
+Game playtime statistics (`playtime_avg` and `playtime_100_avg`) are recalculated asynchronously using Solid Queue. When a `UsersPlaytime` record is created, updated, or deleted, a recalculation task is enqueued.
+
+### Components
+
+**UsersPlaytimeRecalculationService**: Service class that handles:
+- `enqueue(game_id)` — adds a game to the recalculation queue (prevents duplicates)
+- `enqueue_bulk(game_ids)` — adds multiple games to the queue
+- `process_pending` — processes all pending recalculations (up to 100 at a time)
+- `process_recalculation(recalculation)` — processes a single recalculation task
+- `cleanup_old(days_old: 7)` — removes old completed recalculation records
+
+**UsersPlaytimeRecalculationJob**: Job that processes a single recalculation task by calling `UsersPlaytimeRecalculationService.process_recalculation`.
+
+**ProcessPendingPlaytimeRecalculationsJob**: Scheduled job that runs every 5 minutes to process pending recalculations.
+
+**CleanupOldPlaytimeRecalculationsJob**: Scheduled job that runs daily at 3 AM to clean up old records.
+
+### Game Model Integration
+
+**`Game#recalculate_playtime_avg`**: Instance method that recalculates `playtime_avg` and `playtime_100_avg` from active `UsersPlaytime` records:
+- Calculates average `minutes_regular` for `playtime_avg`
+- Calculates average `minutes_100` for `playtime_100_avg`
+- Sets values to `nil` if no active playtimes exist
+- Ignores disabled playtimes (`is_disabled: true`)
+
+### Scheduled Tasks (config/recurring.yml)
+
+```yaml
+development:
+  process_pending_playtime_recalculations:
+    class: ProcessPendingPlaytimeRecalculationsJob
+    queue: default
+    schedule: every 5 minutes
+
+  cleanup_old_playtime_recalculations:
+    class: CleanupOldPlaytimeRecalculationsJob
+    queue: default
+    schedule: at 3am every day
+```
+
+### Running Background Jobs
+
+**Start Solid Queue worker:**
+```bash
+cd api && bin/rails solid_queue:start
+# or
+make api-queue
+```
+
+**Start Rails server and Solid Queue together (requires foreman):**
+```bash
+cd api && foreman start -f Procfile.dev
+# or from project root
+make api-dev-all
+```
+
+**Install foreman:**
+```bash
+gem install foreman
+```
+
 ## Background Jobs: Rating Recalculation
 
 ### Overview
@@ -442,32 +577,13 @@ Game ratings (`rating_avg` and `difficulty_avg`) are recalculated asynchronously
 development:
   process_pending_recalculations:
     class: ProcessPendingRecalculationsJob
+    queue: default
     schedule: every 5 minutes
 
   cleanup_old_recalculations:
     class: CleanupOldRecalculationsJob
+    queue: default
     schedule: at 3am every day
-```
-
-### Running Background Jobs
-
-**Start Solid Queue worker:**
-```bash
-cd api && bin/rails solid_queue:start
-# or
-make api-queue
-```
-
-**Start Rails server and Solid Queue together (requires foreman):**
-```bash
-cd api && foreman start -f Procfile.dev
-# or from project root
-make api-dev-all
-```
-
-**Install foreman:**
-```bash
-gem install foreman
 ```
 
 ## API Endpoints
@@ -507,6 +623,18 @@ All endpoints are under `/api/v1` namespace.
 | DELETE | `/api/v1/reviews/:id` | Soft delete review |
 | GET | `/api/v1/games/:game_id/reviews` | List reviews for a game (paginated) |
 | GET | `/api/v1/users/:user_id/reviews` | List reviews by a user (paginated) |
+
+### Users Playtimes API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/users_playtimes` | List all users playtimes (paginated) |
+| GET | `/api/v1/users_playtimes/:id` | Get users playtime by ID |
+| POST | `/api/v1/users_playtimes` | Create new users playtime |
+| PATCH | `/api/v1/users_playtimes/:id` | Update users playtime |
+| DELETE | `/api/v1/users_playtimes/:id` | Soft delete users playtime |
+| GET | `/api/v1/games/:game_id/users_playtimes` | List users playtimes for a game (paginated) |
+| GET | `/api/v1/users/:user_id/users_playtimes` | List users playtimes by a user (paginated) |
 
 ### Query Parameters
 

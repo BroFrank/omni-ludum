@@ -356,4 +356,76 @@ class GameTest < ActiveSupport::TestCase
     found_game = Game.find_by_name("Test Game")
     assert_nil found_game
   end
+
+  # ============================================
+  # Playtime recalculation methods
+  # ============================================
+  test "recalculate_playtime_avg calculates average from active playtimes" do
+    game = Game.create!(@valid_game_attrs)
+    user = users(:one)
+    user2 = users(:two)
+
+    UsersPlaytime.create!(
+      user: user,
+      game: game,
+      minutes_regular: 120,
+      minutes_100: 360
+    )
+
+    UsersPlaytime.create!(
+      user: user2,
+      game: game,
+      minutes_regular: 180,
+      minutes_100: 420
+    )
+
+    game.recalculate_playtime_avg
+
+    assert_equal 150, game.playtime_avg
+    assert_equal 390, game.playtime_100_avg
+  end
+
+  test "recalculate_playtime_avg sets nil when no active playtimes" do
+    game = Game.create!(@valid_game_attrs.merge(playtime_avg: 120, playtime_100_avg: 360))
+
+    game.recalculate_playtime_avg
+
+    assert_nil game.playtime_avg
+    assert_nil game.playtime_100_avg
+  end
+
+  test "recalculate_playtime_avg ignores disabled playtimes" do
+    game = Game.create!(@valid_game_attrs)
+    user = users(:one)
+
+    UsersPlaytime.create!(
+      user: user,
+      game: game,
+      minutes_regular: 120,
+      minutes_100: 360,
+      is_disabled: true
+    )
+
+    game.recalculate_playtime_avg
+
+    assert_nil game.playtime_avg
+    assert_nil game.playtime_100_avg
+  end
+
+  test "recalculate_playtime_avg handles nil values correctly" do
+    game = Game.create!(@valid_game_attrs)
+    user = users(:one)
+
+    UsersPlaytime.create!(
+      user: user,
+      game: game,
+      minutes_regular: nil,
+      minutes_100: 360
+    )
+
+    game.recalculate_playtime_avg
+
+    assert_nil game.playtime_avg
+    assert_equal 360, game.playtime_100_avg
+  end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_23_225409) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_24_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -83,8 +83,42 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_23_225409) do
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
+  create_table "users_playtime_recalculations", force: :cascade do |t|
+    t.bigint "game_id", null: false
+    t.datetime "scheduled_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.datetime "processed_at"
+    t.string "status", default: "pending", null: false
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "status"], name: "index_users_playtime_recalculations_unique_pending", unique: true, where: "((status)::text = 'pending'::text)"
+    t.index ["game_id"], name: "index_users_playtime_recalculations_on_game_id"
+    t.index ["scheduled_at"], name: "index_users_playtime_recalculations_on_scheduled_at"
+    t.index ["status"], name: "index_users_playtime_recalculations_on_status"
+  end
+
+  create_table "users_playtimes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "game_id", null: false
+    t.integer "minutes_regular"
+    t.integer "minutes_100"
+    t.boolean "is_disabled", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "created_at"], name: "index_users_playtimes_on_game_id_and_created_at"
+    t.index ["game_id"], name: "index_users_playtimes_on_game_id"
+    t.index ["user_id", "created_at"], name: "index_users_playtimes_on_user_id_and_created_at"
+    t.index ["user_id", "game_id"], name: "index_users_playtimes_on_user_id_and_game_id_unique", unique: true, where: "(is_disabled = false)"
+    t.index ["user_id"], name: "index_users_playtimes_on_user_id"
+    t.check_constraint "minutes_100 >= 0", name: "check_minutes_100_positive"
+    t.check_constraint "minutes_regular >= 0", name: "check_minutes_regular_positive"
+  end
+
   add_foreign_key "game_rating_recalculations", "games", on_delete: :cascade
   add_foreign_key "games", "games", column: "base_game_id"
   add_foreign_key "reviews", "games", on_delete: :cascade
   add_foreign_key "reviews", "users", on_delete: :cascade
+  add_foreign_key "users_playtime_recalculations", "games", on_delete: :cascade
+  add_foreign_key "users_playtimes", "games", on_delete: :cascade
+  add_foreign_key "users_playtimes", "users", on_delete: :cascade
 end
