@@ -4,6 +4,7 @@ class Game < ApplicationRecord
   has_many :reviews, dependent: :nullify
   has_many :users_playtimes, dependent: :nullify
   has_many :links, dependent: :destroy
+  has_many :assets, dependent: :destroy
 
   validates :name, presence: true
   validates :name, uniqueness: { case_sensitive: false }

@@ -32,10 +32,17 @@ Rails.application.routes.draw do
 
       resources :links, except: [ :new, :edit ]
 
+      resources :assets, except: [ :new, :edit ] do
+        member do
+          get :download
+        end
+      end
+
       resources :games, only: [] do
         resources :reviews, only: [ :index, :create ], param: :game_name
         resources :users_playtimes, only: [ :index, :create ], param: :game_name
         resources :links, only: [ :index, :create ], param: :game_name
+        resources :assets, only: [ :index, :create ], param: :game_name
       end
 
       resources :users, only: [] do

@@ -1,0 +1,53 @@
+cover_one:
+  game: one
+  asset_type: COVER
+  storage_path: assets/cover1.png
+  mime_type: image/png
+  file_size: 102400
+  order_index: 0
+  is_disabled: false
+
+screenshot_one:
+  game: one
+  asset_type: SCREENSHOT
+  storage_path: assets/screenshot1.png
+  mime_type: image/png
+  file_size: 204800
+  order_index: 1
+  is_disabled: false
+
+screenshot_two:
+  game: one
+  asset_type: SCREENSHOT
+  storage_path: assets/screenshot2.png
+  mime_type: image/png
+  file_size: 153600
+  order_index: 2
+  is_disabled: false
+
+manual_one:
+  game: one
+  asset_type: MANUAL
+  storage_path: assets/manual1.pdf
+  mime_type: application/pdf
+  file_size: 512000
+  order_index:
+  is_disabled: false
+
+cover_two:
+  game: two
+  asset_type: COVER
+  storage_path: assets/cover2.png
+  mime_type: image/jpeg
+  file_size: 128000
+  order_index: 0
+  is_disabled: false
+
+disabled_asset:
+  game: two
+  asset_type: SCREENSHOT
+  storage_path: assets/disabled.png
+  mime_type: image/png
+  file_size: 51200
+  order_index:
+  is_disabled: true

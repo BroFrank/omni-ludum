@@ -527,6 +527,101 @@ LINK_TYPES = {
 
 **`Game#links`**: Has-many association with dependent: :destroy
 
+## Asset Entity
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique asset ID |
+| `game_id` | bigint | FK → games.id, required, indexed | Game this asset belongs to |
+| `asset_type` | string | Required, one of ASSET_TYPES | Type of asset |
+| `storage_path` | string | Required | Path to file in Active Storage |
+| `mime_type` | string | Required | MIME type of the file |
+| `file_size` | integer | Required, > 0 | File size in bytes |
+| `order_index` | integer | >= 0, nullable | Order index for sorting |
+| `is_disabled` | boolean | Default: false | Soft delete flag |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Asset Types (`ASSET_TYPES`)
+
+```ruby
+ASSET_TYPES = {
+  COVER: 'COVER',
+  SCREENSHOT: 'SCREENSHOT',
+  MANUAL: 'MANUAL'
+}.freeze
+```
+
+### Associations
+
+- `belongs_to :game` — associated game
+
+### Scopes
+
+- `Asset.active` — returns assets where `is_disabled: false`
+- `Asset.disabled` — returns assets where `is_disabled: true`
+- `Asset.by_type(type)` — returns assets with specified type
+- `Asset.ordered` — returns assets ordered by `order_index`
+
+### Instance Methods
+
+- `cover?` — true if asset_type is COVER
+- `screenshot?` — true if asset_type is SCREENSHOT
+- `manual?` — true if asset_type is MANUAL
+- `type_label` — returns capitalized asset type (e.g., "Cover")
+- `disable!` — soft deletes the asset
+- `restore!` — restores a soft-deleted asset
+
+### Callbacks
+
+- `before_validation` — normalizes asset_type to uppercase
+
+### Game Model Integration
+
+**`Game#assets`**: Has-many association with dependent: :destroy
+
+### File Upload Service
+
+**AssetUploadService**: Service class that handles file uploads:
+- `upload(game_id, file, asset_type, order_index: nil)` — uploads file and creates asset record
+- `remove(asset_id)` — soft deletes asset and purges file from storage
+- `replace(asset_id, new_file)` — replaces file and updates metadata
+- `download_url(asset_id, expires_in: 5.minutes)` — generates temporary download URL
+
+### File Restrictions
+
+| Parameter | Value |
+|-----------|-------|
+| Max file size | 10 MB |
+| Allowed MIME types | `image/jpeg`, `image/png`, `image/webp`, `application/pdf` |
+
+### Storage Configuration
+
+**Development**: Files stored in `api/tmp/storage/` via Active Storage Disk Service
+
+**Production**: S3-compatible storage (configuration in `config/storage.yml`)
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/games/:game_id/assets` | List assets for a game (paginated) |
+| POST | `/api/v1/games/:game_id/assets` | Upload new asset (multipart/form-data) |
+| GET | `/api/v1/assets/:id` | Get asset metadata |
+| PATCH | `/api/v1/assets/:id` | Update asset metadata (order_index) |
+| DELETE | `/api/v1/assets/:id` | Soft delete asset |
+| GET | `/api/v1/assets/:id/download` | Get temporary download URL |
+
+### Query Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `page` | 1 | Page number for pagination |
+| `per_page` | 20 | Items per page |
+| `asset_type` | — | Filter by type (COVER, SCREENSHOT, MANUAL) |
+
 ## Background Jobs: Playtime Recalculation
 
 ### Overview
@@ -701,6 +796,19 @@ All endpoints are under `/api/v1` namespace.
 | DELETE | `/api/v1/links/:id` | Soft delete link |
 | GET | `/api/v1/games/:game_id/links` | List links for a game (paginated) |
 | POST | `/api/v1/games/:game_id/links` | Create new link for a game |
+
+### Assets API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/assets` | List all assets (paginated) |
+| GET | `/api/v1/assets/:id` | Get asset by ID |
+| POST | `/api/v1/assets` | Create new asset |
+| PATCH | `/api/v1/assets/:id` | Update asset |
+| DELETE | `/api/v1/assets/:id` | Soft delete asset |
+| GET | `/api/v1/assets/:id/download` | Get download URL for asset |
+| GET | `/api/v1/games/:game_id/assets` | List assets for a game (paginated) |
+| POST | `/api/v1/games/:game_id/assets` | Upload new asset for a game (multipart/form-data) |
 
 ### Query Parameters
 

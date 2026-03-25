@@ -1102,6 +1102,229 @@ paths:
               schema:
                 $ref: '#/components/schemas/LinkErrorResponse'
 
+  /api/v1/games/{game_id}/assets:
+    get:
+      summary: Get assets for a game
+      description: Returns a paginated list of assets (covers, screenshots, manuals) for a specific game
+      tags:
+        - Assets
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: Game name identifier
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: asset_type
+          in: query
+          description: Filter by asset type (COVER, SCREENSHOT, MANUAL)
+          required: false
+          schema:
+            type: string
+            enum: [COVER, SCREENSHOT, MANUAL]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Asset'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameNotFoundError'
+    post:
+      summary: Upload a new asset for a game
+      description: Uploads a new asset file (cover, screenshot, or manual) for a specific game
+      tags:
+        - Assets
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: Game name identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload (image/jpeg, image/png, image/webp, application/pdf)
+                asset_type:
+                  type: string
+                  description: Type of the asset
+                  enum: [COVER, SCREENSHOT, MANUAL]
+                  example: "COVER"
+                order_index:
+                  type: integer
+                  description: Order index for sorting (optional)
+                  example: 0
+              required:
+                - file
+                - asset_type
+      responses:
+        '201':
+          description: Asset uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '400':
+          description: Invalid file size or MIME type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetBadRequestError'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetErrorResponse'
+
+  /api/v1/assets/{id}:
+    get:
+      summary: Get asset by ID
+      description: Returns a single asset by its ID
+      tags:
+        - Assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Asset ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetNotFoundError'
+    patch:
+      summary: Update asset
+      description: Updates an existing asset's metadata (order_index)
+      tags:
+        - Assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Asset ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order_index:
+                  type: integer
+                  description: Order index for sorting
+                  example: 5
+      responses:
+        '200':
+          description: Asset updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetErrorResponse'
+    delete:
+      summary: Delete asset (soft delete)
+      description: Sets the asset's is_disabled flag to true (soft delete)
+      tags:
+        - Assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Asset ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Asset deleted successfully
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetNotFoundError'
+
+  /api/v1/assets/{id}/download:
+    get:
+      summary: Download asset file
+      description: Returns a redirect URL to download the asset file
+      tags:
+        - Assets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Asset ID
+          schema:
+            type: integer
+      responses:
+        '302':
+          description: Redirect to file URL
+        '404':
+          description: Asset not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetNotFoundError'
+
 components:
   schemas:
     User:
@@ -1771,3 +1994,81 @@ components:
         error:
           type: string
           example: "Link not found"
+
+    Asset:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique asset ID
+          example: 1
+        game_id:
+          type: integer
+          description: ID of the game this asset belongs to
+          example: 1
+        asset_type:
+          type: string
+          description: Type of the asset
+          enum: [COVER, SCREENSHOT, MANUAL]
+          example: "COVER"
+        storage_path:
+          type: string
+          description: Path to the file in storage
+          example: "assets/abc123/cover.png"
+        mime_type:
+          type: string
+          description: MIME type of the file
+          example: "image/png"
+        file_size:
+          type: integer
+          description: File size in bytes
+          example: 102400
+        order_index:
+          type: integer
+          description: Order index for sorting (optional)
+          example: 0
+        download_url:
+          type: string
+          description: URL to download the asset file
+          example: "http://localhost:3000/api/v1/assets/1/download"
+        is_disabled:
+          type: boolean
+          description: Whether the asset is disabled (soft delete)
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Record update timestamp
+      required:
+        - id
+        - game_id
+        - asset_type
+        - storage_path
+        - mime_type
+        - file_size
+        - is_disabled
+        - created_at
+        - updated_at
+
+    AssetErrorResponse:
+      type: array
+      items:
+        type: string
+      example: ["Asset type must be a valid asset type", "File size must be greater than 0"]
+
+    AssetNotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Asset not found"
+
+    AssetBadRequestError:
+      type: array
+      items:
+        type: string
+      example: ["File size must be less than 10 MB", "File type text/plain is not allowed. Allowed types: image/jpeg, image/png, image/webp, application/pdf"]

@@ -10,6 +10,10 @@ module Api
       def game_not_found
         render json: { error: "Game not found" }, status: :not_found
       end
+
+      def asset_not_found
+        render json: { error: "Asset not found" }, status: :not_found
+      end
     end
   end
 end
