@@ -1325,6 +1325,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/AssetNotFoundError'
 
+  /api/v1/platforms:
+    get:
+      summary: Get list of active platforms
+      description: Returns a paginated list of active (non-disabled) platforms
+      tags:
+        - Platforms
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Platform'
+
+  /api/v1/platforms/{slug}:
+    get:
+      summary: Get platform by slug
+      description: Returns a single active platform by its slug
+      tags:
+        - Platforms
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Unique slug identifier for the platform
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Platform'
+        '404':
+          description: Platform not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformNotFoundError'
+
 components:
   schemas:
     User:
@@ -1562,6 +1620,13 @@ components:
           type: integer
           description: ID of the original game (for DLCs/mods)
           example: 1
+        platform_id:
+          type: integer
+          description: ID of the platform
+          example: 1
+        platform:
+          $ref: '#/components/schemas/Platform'
+          description: Platform details
         created_at:
           type: string
           format: date-time
@@ -1573,6 +1638,38 @@ components:
         - name
         - is_dlc
         - is_mod
+        - is_disabled
+        - created_at
+        - updated_at
+
+    Platform:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique platform ID
+        name:
+          type: string
+          description: Platform name
+          example: "Nintendo Switch"
+        slug:
+          type: string
+          description: URL-friendly unique identifier
+          example: "nintendo-switch"
+        is_disabled:
+          type: boolean
+          description: Whether the platform is disabled (soft delete)
+          example: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - slug
         - is_disabled
         - created_at
         - updated_at
@@ -1621,6 +1718,10 @@ components:
               type: integer
               description: ID of the original game (for DLCs/mods)
               example: 1
+            platform_id:
+              type: integer
+              description: ID of the platform
+              example: 1
           required:
             - name
 
@@ -1668,6 +1769,10 @@ components:
               type: integer
               description: ID of the original game (for DLCs/mods)
               example: 1
+            platform_id:
+              type: integer
+              description: ID of the platform
+              example: 4
 
     Review:
       type: object
@@ -2072,3 +2177,20 @@ components:
       items:
         type: string
       example: ["File size must be less than 10 MB", "File type text/plain is not allowed. Allowed types: image/jpeg, image/png, image/webp, application/pdf"]
+
+    PlatformNotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Platform not found"
+
+    PlatformErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of validation error messages
+          example: ["Name has already been taken", "Slug has already been taken"]

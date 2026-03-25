@@ -54,7 +54,8 @@ module Api
           :playtime_100_avg,
           :is_dlc,
           :is_mod,
-          :base_game_id
+          :base_game_id,
+          :platform_id
         )
       end
     end

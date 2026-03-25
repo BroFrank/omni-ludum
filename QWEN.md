@@ -325,7 +325,7 @@ Auto-generated from username:
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|
 | `id` | bigint | Primary key | Unique game ID |
-| `name` | string | Required, unique (case-insensitive), indexed | Game name |
+| `name` | string | Required, indexed | Game name |
 | `release_year` | integer | 1970-2100, indexed | Year of release |
 | `rating_avg` | float | 0-10 | Average user rating (future: calculated) |
 | `difficulty_avg` | float | 0-10 | Average difficulty rating (future: calculated) |
@@ -335,8 +335,15 @@ Auto-generated from username:
 | `is_mod` | boolean | Default: false | Mod/room hack flag |
 | `is_disabled` | boolean | Default: false | Soft delete flag |
 | `base_game_id` | bigint | FK → games.id, nullable | Reference to original game |
+| `platform_id` | bigint | FK → platforms.id, nullable | Reference to platform |
 | `created_at` | datetime | Auto-generated | Creation timestamp |
 | `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Associations
+
+- `belongs_to :platform, optional: true` — associated platform (optional for backward compatibility)
+- `belongs_to :base_game, class_name: "Game", optional: true` — associated base game
+- `has_many :dlcs, class_name: "Game", foreign_key: :base_game_id` — DLCs for this game
 
 ### Self-Referencing Association
 
@@ -344,6 +351,13 @@ Games can reference other games via `base_game_id`:
 - Used for DLCs, mods, and room hacks to link to their original game
 - Foreign key constraint ensures referential integrity
 - When base game is soft deleted, `base_game_id` should be set to NULL (manual handling)
+
+### Platform Association
+
+Games can be associated with a platform:
+- Same game name can exist on different platforms (e.g., "The Witcher 3" on PC and PlayStation)
+- `platform_id` is optional for backward compatibility with existing records
+- When platform is soft deleted, `platform_id` is set to NULL (dependent: :nullify)
 
 ### Scopes
 
@@ -366,6 +380,55 @@ Games can reference other games via `base_game_id`:
 
 - `Game.find_by_name!(name)` — find active game by name (raises error if not found)
 - `Game.find_by_name(name)` — find active game by name (returns nil if not found)
+
+## Platform Entity
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique platform ID |
+| `name` | string | Required | Platform name (e.g., "Nintendo Switch", "PC") |
+| `slug` | string | Required, unique (case-insensitive) | URL-friendly identifier |
+| `is_disabled` | boolean | Default: false | Soft delete flag |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Associations
+
+- `has_many :games, dependent: :nullify` — games on this platform
+
+### Scopes
+
+- `Platform.active` — returns platforms where `is_disabled: false`
+- `Platform.disabled` — returns platforms where `is_disabled: true`
+
+### Instance Methods
+
+- `games` — returns all games on this platform
+
+### Class Methods
+
+- `Platform.find_by_slug!(slug)` — find active platform by slug (raises error if not found)
+- `Platform.find_by_slug(slug)` — find active platform by slug (returns nil if not found)
+
+### Slug Generation
+
+Auto-generated from name if not provided:
+- Converted to lowercase
+- Spaces replaced with hyphens
+- Special characters removed
+- Example: `"Nintendo Switch"` → `"nintendo-switch"`
+- Example: `"Mobile (iOS)"` → `"mobile-ios"`
+
+### Seed Data
+
+The following platforms are seeded by default:
+- Nintendo Switch, Sega MegaDrive, Super Nintendo, PC
+- PlayStation, PlayStation 2, PlayStation 3, PlayStation 4, PlayStation 5
+- Xbox, Xbox One, Xbox Series X/S
+- Steam Deck, Mobile (iOS), Mobile (Android)
+- Nintendo 3DS, Nintendo DS, PlayStation Vita, PSP, Game Boy Advance
 
 ## Review Entity
 
@@ -760,6 +823,13 @@ All endpoints are under `/api/v1` namespace.
 | POST | `/api/v1/games` | Create new game |
 | PATCH | `/api/v1/games/:name` | Update game |
 | PATCH | `/api/v1/games/:id/disable` | Soft delete game |
+
+### Platforms API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/platforms` | List active platforms (paginated) |
+| GET | `/api/v1/platforms/:slug` | Get platform by slug |
 
 ### Reviews API
 

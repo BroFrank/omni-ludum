@@ -53,3 +53,35 @@ User.new(
 User.all.each do |u|
   u.update_column(:slug, u.username.downcase.gsub(/\s+/, '_').gsub(/[^a-z0-9_]/, ''))
 end
+
+# Platforms
+Platform.destroy_all
+
+platforms = [
+  { name: 'Nintendo Switch', slug: 'nintendo-switch' },
+  { name: 'Sega MegaDrive', slug: 'sega-megadrive' },
+  { name: 'Super Nintendo', slug: 'super-nintendo' },
+  { name: 'PC', slug: 'pc' },
+  { name: 'PlayStation', slug: 'playstation' },
+  { name: 'PlayStation 5', slug: 'playstation-5' },
+  { name: 'PlayStation 4', slug: 'playstation-4' },
+  { name: 'PlayStation 3', slug: 'playstation-3' },
+  { name: 'PlayStation 2', slug: 'playstation-2' },
+  { name: 'Xbox', slug: 'xbox' },
+  { name: 'Xbox Series X/S', slug: 'xbox-series-xs' },
+  { name: 'Xbox One', slug: 'xbox-one' },
+  { name: 'Steam Deck', slug: 'steam-deck' },
+  { name: 'Mobile (iOS)', slug: 'mobile-ios' },
+  { name: 'Mobile (Android)', slug: 'mobile-android' },
+  { name: 'Nintendo 3DS', slug: 'nintendo-3ds' },
+  { name: 'Nintendo DS', slug: 'nintendo-ds' },
+  { name: 'PlayStation Vita', slug: 'playstation-vita' },
+  { name: 'PSP', slug: 'psp' },
+  { name: 'Game Boy Advance', slug: 'game-boy-advance' }
+]
+
+platforms.each do |platform_attrs|
+  Platform.find_or_create_by!(slug: platform_attrs[:slug]) do |p|
+    p.name = platform_attrs[:name]
+  end
+end

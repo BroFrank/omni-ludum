@@ -1,4 +1,5 @@
 class Game < ApplicationRecord
+  belongs_to :platform, optional: true
   belongs_to :base_game, class_name: "Game", optional: true
   has_many :dlcs, class_name: "Game", foreign_key: :base_game_id
   has_many :reviews, dependent: :nullify
@@ -7,7 +8,6 @@ class Game < ApplicationRecord
   has_many :assets, dependent: :destroy
 
   validates :name, presence: true
-  validates :name, uniqueness: { case_sensitive: false }
   validates :release_year, numericality: { only_integer: true, allow_nil: true }
   validates :release_year, inclusion: { in: 1970..2100, allow_nil: true }
   validates :rating_avg, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 10, allow_nil: true }

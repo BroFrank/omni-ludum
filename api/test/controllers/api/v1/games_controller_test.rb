@@ -111,15 +111,38 @@ class Api::V1::GamesControllerTest < ActionDispatch::IntegrationTest
     assert json_response["errors"].any?
   end
 
-  test "POST /api/v1/games with duplicate name returns error" do
-    Game.create!(@valid_game_attrs)
+  test "POST /api/v1/games creates game with platform_id" do
+    platform = Platform.create!(name: "PC", slug: "pc")
 
     post api_v1_games_url, params: {
-      game: { name: "test game" }
+      game: @valid_game_attrs.merge(platform_id: platform.id)
     }, as: :json
 
-    assert_response :unprocessable_entity
-    assert json_response["errors"].any?
+    assert_response :created
+    assert_equal platform.id, json_response["platform_id"]
+  end
+
+  test "POST /api/v1/games creates game without platform_id" do
+    post api_v1_games_url, params: {
+      game: @valid_game_attrs
+    }, as: :json
+
+    assert_response :created
+    assert_nil json_response["platform_id"]
+  end
+
+  test "POST /api/v1/games with same name on different platforms is successful" do
+    platform1 = Platform.create!(name: "PC", slug: "pc")
+    platform2 = Platform.create!(name: "PlayStation", slug: "playstation")
+
+    Game.create!(@valid_game_attrs.merge(platform: platform1))
+
+    post api_v1_games_url, params: {
+      game: @valid_game_attrs.merge(platform_id: platform2.id, release_year: 2021)
+    }, as: :json
+
+    assert_response :created
+    assert_equal platform2.id, json_response["platform_id"]
   end
 
   test "POST /api/v1/games creates game with all fields" do
@@ -267,6 +290,18 @@ class Api::V1::GamesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_equal base_game.id, json_response["base_game_id"]
+  end
+
+  test "PATCH /api/v1/games/:id can update platform_id" do
+    platform = Platform.create!(name: "PC", slug: "pc")
+    game = Game.create!(@valid_game_attrs)
+
+    patch api_v1_game_url(game.name), params: {
+      game: { platform_id: platform.id }
+    }, as: :json
+
+    assert_response :success
+    assert_equal platform.id, json_response["platform_id"]
   end
 
   # ============================================

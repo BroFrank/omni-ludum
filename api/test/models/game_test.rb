@@ -22,18 +22,14 @@ class GameTest < ActiveSupport::TestCase
     assert game.errors.added?(:name, :blank)
   end
 
-  test "name must be unique (case insensitive)" do
-    Game.create!(@valid_game_attrs)
-    game = Game.new(@valid_game_attrs.merge(name: "test game"))
-    assert_not game.valid?
-    assert game.errors[:name].any?
-  end
+  test "name is not unique across different platforms" do
+    platform1 = Platform.create!(name: "PC", slug: "pc")
+    platform2 = Platform.create!(name: "PlayStation", slug: "playstation")
 
-  test "name with different case are considered the same" do
-    Game.create!(@valid_game_attrs)
-    game = Game.new(@valid_game_attrs.merge(name: "Test Game", release_year: 2021))
-    assert_not game.valid?
-    assert game.errors[:name].any?
+    Game.create!(@valid_game_attrs.merge(platform: platform1))
+    game = Game.new(@valid_game_attrs.merge(platform: platform2))
+
+    assert game.valid?, "Games with same name on different platforms should be valid"
   end
 
   # ============================================
@@ -427,5 +423,31 @@ class GameTest < ActiveSupport::TestCase
 
     assert_nil game.playtime_avg
     assert_equal 360, game.playtime_100_avg
+  end
+
+  # ============================================
+  # Platform association tests
+  # ============================================
+  test "game can have a platform" do
+    platform = Platform.create!(name: "PC", slug: "pc")
+    game = Game.create!(@valid_game_attrs.merge(platform: platform))
+
+    assert_equal platform.id, game.platform_id
+    assert_equal platform.id, game.platform.id
+  end
+
+  test "game can have platform_id nil" do
+    game = Game.create!(@valid_game_attrs)
+    assert_nil game.platform_id
+  end
+
+  test "game with same name on different platforms is valid" do
+    platform1 = Platform.create!(name: "PC", slug: "pc")
+    platform2 = Platform.create!(name: "PlayStation", slug: "playstation")
+
+    game1 = Game.create!(@valid_game_attrs.merge(platform: platform1))
+    game2 = Game.new(@valid_game_attrs.merge(platform: platform2, release_year: 2021))
+
+    assert game2.valid?, "Games with same name on different platforms should be valid"
   end
 end
