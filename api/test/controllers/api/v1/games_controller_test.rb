@@ -4,7 +4,7 @@ class Api::V1::GamesControllerTest < ActionDispatch::IntegrationTest
   setup do
     # Clean up any games created by previous tests
     Game.delete_all
-    
+
     @valid_game_attrs = {
       name: "Test Game",
       release_year: 2020

@@ -4,12 +4,12 @@ class Api::V1::ReviewsControllerTest < ActionDispatch::IntegrationTest
   setup do
     # Clean up any reviews created by previous tests
     Review.delete_all
-    
+
     @user = users(:one)
     @user2 = users(:two)
     @game = games(:one)
     @game2 = games(:two)
-    
+
     @review = Review.create!(
       user: @user,
       game: @game,
@@ -72,7 +72,7 @@ class Api::V1::ReviewsControllerTest < ActionDispatch::IntegrationTest
         }
       }
     end
-    
+
     assert_response :created
     assert_equal 9, assigns(:review).rating
     assert_equal 6, assigns(:review).difficulty
@@ -87,7 +87,7 @@ class Api::V1::ReviewsControllerTest < ActionDispatch::IntegrationTest
         }
       }
     end
-    
+
     assert_response :unprocessable_entity
     assert_not_nil response.parsed_body["errors"]
   end
@@ -103,7 +103,7 @@ class Api::V1::ReviewsControllerTest < ActionDispatch::IntegrationTest
         }
       }
     end
-    
+
     assert_response :unprocessable_entity
   end
 
@@ -115,7 +115,7 @@ class Api::V1::ReviewsControllerTest < ActionDispatch::IntegrationTest
         comment: "Updated review"
       }
     }
-    
+
     assert_response :success
     assert_equal 10, assigns(:review).rating
     assert_equal 8, assigns(:review).difficulty
@@ -128,14 +128,14 @@ class Api::V1::ReviewsControllerTest < ActionDispatch::IntegrationTest
         rating: 11
       }
     }
-    
+
     assert_response :unprocessable_entity
   end
 
   test "should soft delete a review" do
     delete api_v1_review_url(@review)
     assert_response :success
-    
+
     @review.reload
     assert @review.is_disabled
   end
@@ -151,7 +151,7 @@ class Api::V1::ReviewsControllerTest < ActionDispatch::IntegrationTest
   test "should include game and user in response" do
     get api_v1_review_url(@review)
     assert_response :success
-    
+
     json_response = JSON.parse(response.body)
     assert_not_nil json_response["game"]
     assert_not_nil json_response["user"]

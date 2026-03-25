@@ -10,8 +10,8 @@ class CreateGameRatingRecalculations < ActiveRecord::Migration[7.2]
       t.timestamps
     end
 
-    add_index :game_rating_recalculations, [:game_id, :status], unique: true, where: "status = 'pending'", name: 'index_game_rating_recalculations_unique_pending'
-    
+    add_index :game_rating_recalculations, [ :game_id, :status ], unique: true, where: "status = 'pending'", name: 'index_game_rating_recalculations_unique_pending'
+
     add_index :game_rating_recalculations, :scheduled_at
     add_index :game_rating_recalculations, :status
   end

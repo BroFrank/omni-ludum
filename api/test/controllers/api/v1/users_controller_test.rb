@@ -4,7 +4,7 @@ class Api::V1::UsersControllerTest < ActionDispatch::IntegrationTest
   setup do
     # Clean up any users created by previous tests
     User.delete_all
-    
+
     @valid_user_attrs = {
       username: "testuser",
       email: "test@example.com",

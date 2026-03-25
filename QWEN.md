@@ -473,6 +473,60 @@ Tracks pending playtime recalculation tasks for games. Used by `UsersPlaytimeRec
 
 Only one pending recalculation per game (enforced by unique partial index on `[:game_id, :status]` where `status = 'pending'`).
 
+## Link Entity
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique link ID |
+| `game_id` | bigint | FK → games.id, required, indexed | Game being linked |
+| `link_type` | string | Required, one of LINK_TYPES | Type of link |
+| `url` | text | Required | URL of the link |
+| `title` | string | Required, 1-255 chars | Title of the link |
+| `is_disabled` | boolean | Default: false | Soft delete flag |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Link Types (`LINK_TYPES`)
+
+```ruby
+LINK_TYPES = {
+  TRAILER: 'TRAILER',
+  LONGPLAY: 'LONGPLAY',
+  SPEEDRUN: 'SPEEDRUN',
+  OTHER: 'OTHER'
+}.freeze
+```
+
+### Associations
+
+- `belongs_to :game` — associated game
+
+### Scopes
+
+- `Link.active` — returns links where `is_disabled: false`
+- `Link.disabled` — returns links where `is_disabled: true`
+- `Link.by_type(type)` — returns links with specified type
+
+### Instance Methods
+
+- `trailer?` — true if link_type is TRAILER
+- `longplay?` — true if link_type is LONGPLAY
+- `speedrun?` — true if link_type is SPEEDRUN
+- `other?` — true if link_type is OTHER
+- `type_label` — returns capitalized link type (e.g., "Trailer")
+- `disable!` — soft deletes the link
+- `restore!` — restores a soft-deleted link
+
+### Callbacks
+
+- `before_validation` — normalizes link_type to uppercase
+
+### Game Model Integration
+
+**`Game#links`**: Has-many association with dependent: :destroy
+
 ## Background Jobs: Playtime Recalculation
 
 ### Overview
@@ -635,6 +689,18 @@ All endpoints are under `/api/v1` namespace.
 | DELETE | `/api/v1/users_playtimes/:id` | Soft delete users playtime |
 | GET | `/api/v1/games/:game_id/users_playtimes` | List users playtimes for a game (paginated) |
 | GET | `/api/v1/users/:user_id/users_playtimes` | List users playtimes by a user (paginated) |
+
+### Links API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/links` | List all links (paginated) |
+| GET | `/api/v1/links/:id` | Get link by ID |
+| POST | `/api/v1/links` | Create new link |
+| PATCH | `/api/v1/links/:id` | Update link |
+| DELETE | `/api/v1/links/:id` | Soft delete link |
+| GET | `/api/v1/games/:game_id/links` | List links for a game (paginated) |
+| POST | `/api/v1/games/:game_id/links` | Create new link for a game |
 
 ### Query Parameters
 

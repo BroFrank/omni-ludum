@@ -1,33 +1,33 @@
 module Api
   module V1
     class ReviewsController < BaseController
-      before_action :set_game, only: [:index, :create]
-      before_action :set_user, only: [:index]
-      before_action :set_review, only: [:show, :update, :destroy]
+      before_action :set_game, only: [ :index, :create ]
+      before_action :set_user, only: [ :index ]
+      before_action :set_review, only: [ :show, :update, :destroy ]
 
       def index
         @reviews = if @game
                      @game.reviews.active.order(created_at: :desc)
-                   elsif @user
+        elsif @user
                      @user.reviews.active.includes(:game).order(created_at: :desc)
-                   else
+        else
                      Review.active.includes(:game, :user).order(created_at: :desc)
-                   end
-        
+        end
+
         @reviews = @reviews.page(params[:page]).per(params[:per_page] || 20)
-        
-        render json: @reviews, include: [:game, :user], status: :ok
+
+        render json: @reviews, include: [ :game, :user ], status: :ok
       end
 
       def show
-        render json: @review, include: [:game, :user], status: :ok
+        render json: @review, include: [ :game, :user ], status: :ok
       end
 
       def create
         @review = Review.new(review_params)
-        
+
         if @review.save
-          render json: @review, include: [:game, :user], status: :created
+          render json: @review, include: [ :game, :user ], status: :created
         else
           render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
         end
@@ -35,7 +35,7 @@ module Api
 
       def update
         if @review.update(review_params)
-          render json: @review, include: [:game, :user], status: :ok
+          render json: @review, include: [ :game, :user ], status: :ok
         else
           render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
         end

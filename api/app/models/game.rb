@@ -3,6 +3,7 @@ class Game < ApplicationRecord
   has_many :dlcs, class_name: "Game", foreign_key: :base_game_id
   has_many :reviews, dependent: :nullify
   has_many :users_playtimes, dependent: :nullify
+  has_many :links, dependent: :destroy
 
   validates :name, presence: true
   validates :name, uniqueness: { case_sensitive: false }

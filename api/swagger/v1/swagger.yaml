@@ -882,6 +882,226 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserNotFoundError'
 
+  /api/v1/links:
+    get:
+      summary: Get list of links
+      description: Returns a paginated list of links
+      tags:
+        - Links
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Link'
+    post:
+      summary: Create a new link
+      description: Creates a new link for a game
+      tags:
+        - Links
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLinkRequest'
+      responses:
+        '201':
+          description: Link created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkErrorResponse'
+
+  /api/v1/links/{id}:
+    get:
+      summary: Get link by ID
+      description: Returns a single link by its ID
+      tags:
+        - Links
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Link ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '404':
+          description: Link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkNotFoundError'
+    patch:
+      summary: Update link
+      description: Updates an existing link's details
+      tags:
+        - Links
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Link ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLinkRequest'
+      responses:
+        '200':
+          description: Link updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '404':
+          description: Link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkErrorResponse'
+    delete:
+      summary: Delete link (soft delete)
+      description: Sets the link's is_disabled flag to true (soft delete)
+      tags:
+        - Links
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Link ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Link deleted successfully
+        '404':
+          description: Link not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkNotFoundError'
+
+  /api/v1/games/{game_id}/links:
+    get:
+      summary: Get links for a game
+      description: Returns a paginated list of links for a specific game
+      tags:
+        - Links
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: Game name identifier
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Link'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameNotFoundError'
+    post:
+      summary: Create a new link for a game
+      description: Creates a new link for a specific game
+      tags:
+        - Links
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: Game name identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLinkRequest'
+      responses:
+        '201':
+          description: Link created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkErrorResponse'
+
 components:
   schemas:
     User:
@@ -1444,3 +1664,110 @@ components:
         error:
           type: string
           example: "Users playtime not found"
+
+    Link:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique link ID
+          example: 1
+        game_id:
+          type: integer
+          description: ID of the game
+          example: 1
+        link_type:
+          type: string
+          description: Type of the link
+          enum: [TRAILER, LONGPLAY, SPEEDRUN, OTHER]
+          example: "TRAILER"
+        url:
+          type: string
+          description: URL of the link
+          example: "https://www.youtube.com/watch?v=example"
+        title:
+          type: string
+          description: Title of the link
+          example: "Official Trailer"
+        is_disabled:
+          type: boolean
+          description: Whether the link is disabled (soft delete)
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Record update timestamp
+      required:
+        - id
+        - game_id
+        - link_type
+        - url
+        - title
+        - is_disabled
+        - created_at
+        - updated_at
+
+    CreateLinkRequest:
+      type: object
+      properties:
+        link:
+          type: object
+          properties:
+            game_id:
+              type: integer
+              description: ID of the game
+              example: 1
+            link_type:
+              type: string
+              description: Type of the link
+              enum: [TRAILER, LONGPLAY, SPEEDRUN, OTHER]
+              example: "TRAILER"
+            url:
+              type: string
+              description: URL of the link
+              example: "https://www.youtube.com/watch?v=example"
+            title:
+              type: string
+              description: Title of the link
+              example: "Official Trailer"
+          required:
+            - link_type
+            - url
+            - title
+
+    UpdateLinkRequest:
+      type: object
+      properties:
+        link:
+          type: object
+          properties:
+            link_type:
+              type: string
+              description: Type of the link
+              enum: [TRAILER, LONGPLAY, SPEEDRUN, OTHER]
+              example: "LONGPLAY"
+            url:
+              type: string
+              description: URL of the link
+              example: "https://www.youtube.com/watch?v=new_video"
+            title:
+              type: string
+              description: Title of the link
+              example: "Updated Title"
+
+    LinkErrorResponse:
+      type: array
+      items:
+        type: string
+      example: ["Url must be a valid URL", "Title can't be blank", "Link type must be a valid link type"]
+
+    LinkNotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Link not found"

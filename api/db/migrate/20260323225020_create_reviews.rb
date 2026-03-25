@@ -18,9 +18,9 @@ class CreateReviews < ActiveRecord::Migration[7.2]
         ADD CONSTRAINT check_difficulty_range CHECK (difficulty >= 0 AND difficulty <= 10);
     SQL
 
-    add_index :reviews, [:game_id, :created_at]
-    add_index :reviews, [:user_id, :created_at]
-    
-    add_index :reviews, [:user_id, :game_id], unique: true, where: 'is_disabled = false', name: 'index_reviews_on_user_id_and_game_id_unique'
+    add_index :reviews, [ :game_id, :created_at ]
+    add_index :reviews, [ :user_id, :created_at ]
+
+    add_index :reviews, [ :user_id, :game_id ], unique: true, where: 'is_disabled = false', name: 'index_reviews_on_user_id_and_game_id_unique'
   end
 end

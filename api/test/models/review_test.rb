@@ -111,7 +111,7 @@ class ReviewTest < ActiveSupport::TestCase
       comment: "a" * 10001
     )
     assert_not review.valid?
-    assert review.errors[:comment].any? { |msg| msg.include?('too long') }
+    assert review.errors[:comment].any? { |msg| msg.include?("too long") }
   end
 
   test "user can only review a game once (active reviews)" do
@@ -220,7 +220,7 @@ class ReviewTest < ActiveSupport::TestCase
       rating: 8,
       difficulty: 5
     )
-    
+
     recalculation = GameRatingRecalculation.find_by(game_id: @game.id, status: GameRatingRecalculation::STATUS_PENDING)
     assert_not_nil recalculation
   end
@@ -234,7 +234,7 @@ class ReviewTest < ActiveSupport::TestCase
     )
 
     review.update!(rating: 9)
-    
+
     recalculation = GameRatingRecalculation.find_by(game_id: @game.id, status: GameRatingRecalculation::STATUS_PENDING)
     assert_not_nil recalculation
   end
@@ -248,7 +248,7 @@ class ReviewTest < ActiveSupport::TestCase
     )
 
     review.update!(difficulty: 7)
-    
+
     recalculation = GameRatingRecalculation.find_by(game_id: @game.id, status: GameRatingRecalculation::STATUS_PENDING)
     assert_not_nil recalculation
   end
@@ -260,11 +260,11 @@ class ReviewTest < ActiveSupport::TestCase
       rating: 8,
       difficulty: 5
     )
-    
+
     review.update!(rating: 9)
-    
+
     review.update!(rating: 10)
-    
+
     count = GameRatingRecalculation.where(game_id: @game.id, status: GameRatingRecalculation::STATUS_PENDING).count
     assert_equal 1, count
   end

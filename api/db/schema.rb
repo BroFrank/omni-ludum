@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_24_000002) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_25_140522) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -45,6 +45,20 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_24_000002) do
     t.index ["is_disabled"], name: "index_games_on_is_disabled"
     t.index ["name"], name: "index_games_on_name"
     t.index ["release_year"], name: "index_games_on_release_year"
+  end
+
+  create_table "links", force: :cascade do |t|
+    t.bigint "game_id", null: false
+    t.string "link_type", null: false
+    t.text "url", null: false
+    t.string "title", null: false
+    t.boolean "is_disabled", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "link_type"], name: "index_links_on_game_id_and_link_type"
+    t.index ["game_id"], name: "index_links_on_game_id"
+    t.index ["link_type"], name: "index_links_on_link_type"
+    t.check_constraint "link_type::text = ANY (ARRAY['TRAILER'::character varying, 'LONGPLAY'::character varying, 'SPEEDRUN'::character varying, 'OTHER'::character varying]::text[])", name: "check_link_type_valid"
   end
 
   create_table "reviews", force: :cascade do |t|
@@ -116,6 +130,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_24_000002) do
 
   add_foreign_key "game_rating_recalculations", "games", on_delete: :cascade
   add_foreign_key "games", "games", column: "base_game_id"
+  add_foreign_key "links", "games", on_delete: :cascade
   add_foreign_key "reviews", "games", on_delete: :cascade
   add_foreign_key "reviews", "users", on_delete: :cascade
   add_foreign_key "users_playtime_recalculations", "games", on_delete: :cascade
