@@ -45,10 +45,3 @@ module PUBLISHER_TYPES
 
   ALL_TYPES = [ PUBLISHER, DEVELOPER, PERSON ].freeze
 end
-
-module PUBLISHER_TEXT_LOCALES
-  ENGLISH = "en"
-  RUSSIAN = "ru"
-
-  ALL_LOCALES = [ ENGLISH, RUSSIAN ].freeze
-end

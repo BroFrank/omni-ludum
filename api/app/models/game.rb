@@ -7,6 +7,7 @@ class Game < ApplicationRecord
   has_many :users_playtimes, dependent: :nullify
   has_many :links, dependent: :destroy
   has_many :assets, dependent: :destroy
+  has_many :game_texts, dependent: :destroy
 
   validates :name, presence: true
   validates :release_year, numericality: { only_integer: true, allow_nil: true }
@@ -65,5 +66,17 @@ class Game < ApplicationRecord
         playtime_100_avg: nil
       )
     end
+  end
+
+  def description_for(locale)
+    game_texts.find_by(lang_code: locale.to_s.downcase)&.description
+  end
+
+  def trivia_for(locale)
+    game_texts.find_by(lang_code: locale.to_s.downcase)&.trivia
+  end
+
+  def all_texts
+    game_texts.order(:lang_code)
   end
 end

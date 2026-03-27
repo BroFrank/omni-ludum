@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_27_171152) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_27_171153) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -74,6 +74,17 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_27_171152) do
     t.index ["game_id"], name: "index_game_rating_recalculations_on_game_id"
     t.index ["scheduled_at"], name: "index_game_rating_recalculations_on_scheduled_at"
     t.index ["status"], name: "index_game_rating_recalculations_on_status"
+  end
+
+  create_table "game_texts", force: :cascade do |t|
+    t.bigint "game_id", null: false
+    t.string "lang_code", limit: 2, null: false
+    t.text "description"
+    t.text "trivia"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "lang_code"], name: "index_game_texts_on_game_id_and_lang_code", unique: true
+    t.index ["game_id"], name: "index_game_texts_on_game_id"
   end
 
   create_table "games", force: :cascade do |t|
@@ -218,6 +229,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_27_171152) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "assets", "games", on_delete: :cascade
   add_foreign_key "game_rating_recalculations", "games", on_delete: :cascade
+  add_foreign_key "game_texts", "games", on_delete: :cascade
   add_foreign_key "games", "games", column: "base_game_id"
   add_foreign_key "games", "platforms"
   add_foreign_key "games", "publishers", on_delete: :nullify

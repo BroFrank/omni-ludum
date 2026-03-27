@@ -36,6 +36,8 @@ Rails.application.routes.draw do
 
       resources :publisher_texts, except: [ :new, :edit ]
 
+      resources :game_texts, except: [ :new, :edit ]
+
       resources :reviews, except: [ :new, :edit ]
 
       resources :users_playtimes, except: [ :new, :edit ]
@@ -53,6 +55,7 @@ Rails.application.routes.draw do
         resources :users_playtimes, only: [ :index, :create ], param: :game_name
         resources :links, only: [ :index, :create ], param: :game_name
         resources :assets, only: [ :index, :create ], param: :game_name
+        resources :game_texts, only: [ :index, :create ], param: :game_name
       end
 
       resources :users, only: [] do

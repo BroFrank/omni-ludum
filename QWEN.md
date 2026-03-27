@@ -456,15 +456,6 @@ PUBLISHER_TYPES = {
 }.freeze
 ```
 
-### Publisher Text Locales (`PUBLISHER_TEXT_LOCALES`)
-
-```ruby
-PUBLISHER_TEXT_LOCALES = {
-  ENGLISH: 'en',
-  RUSSIAN: 'ru'
-}.freeze
-```
-
 ### Associations
 
 - `has_many :games, dependent: :nullify` — games published by this publisher
@@ -552,6 +543,48 @@ The following publisher texts are seeded by default (en + ru for each publisher)
 - Nintendo, Sony Interactive Entertainment, Microsoft Studios, Valve
 - CD Projekt Red, FromSoftware
 - Toby Fox, Eric Barone
+
+## GameText Entity
+
+### Overview
+
+Localized descriptions and trivia for games. Each game can have multiple texts in different languages.
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique game text ID |
+| `game_id` | bigint | FK → games.id, required | Game this text belongs to |
+| `lang_code` | string | Required, 2 chars, `[a-z]{2}` | Language code (ISO 639-1) |
+| `description` | text | Max 10000 chars, optional | Game description |
+| `trivia` | text | Max 10000 chars, optional | Interesting facts about the game |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Associations
+
+- `belongs_to :game` — associated game
+
+### Scopes
+
+- `GameText.active` — returns texts for active games only
+- `GameText.by_lang(lang_code)` — filters by language code
+- `GameText.for_game(game_id)` — filters by game
+
+### Unique Constraint
+
+Only one description per language per game (enforced by unique index on `[:game_id, :lang_code]`).
+
+### Cascade Delete
+
+When a game is destroyed, all its game_texts are destroyed automatically (`dependent: :destroy`).
+
+### Game Model Methods
+
+- `description_for(locale)` — returns description for specified locale (e.g., "en", "ru")
+- `trivia_for(locale)` — returns trivia for specified locale
+- `all_texts` — returns all texts ordered by lang_code
 
 ## Review Entity
 
@@ -975,6 +1008,18 @@ All endpoints are under `/api/v1` namespace.
 | POST | `/api/v1/publishers/:slug/publisher_texts` | Create text for a publisher |
 | PATCH | `/api/v1/publisher_texts/:id` | Update publisher text |
 | DELETE | `/api/v1/publisher_texts/:id` | Delete publisher text |
+
+### GameTexts API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/game_texts` | List all game texts (paginated) |
+| GET | `/api/v1/game_texts/:id` | Get game text by ID |
+| GET | `/api/v1/games/:game_id/game_texts` | List texts for a game |
+| POST | `/api/v1/game_texts` | Create new game text |
+| POST | `/api/v1/games/:game_id/game_texts` | Create text for a game |
+| PATCH | `/api/v1/game_texts/:id` | Update game text |
+| DELETE | `/api/v1/game_texts/:id` | Delete game text |
 
 ### Reviews API
 
