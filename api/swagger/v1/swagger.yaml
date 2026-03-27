@@ -1383,6 +1383,372 @@ paths:
               schema:
                 $ref: '#/components/schemas/PlatformNotFoundError'
 
+  /api/v1/publishers:
+    get:
+      summary: Get list of active publishers
+      description: Returns a paginated list of active (non-disabled) publishers
+      tags:
+        - Publishers
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Publisher'
+    post:
+      summary: Create a new publisher
+      description: Creates a new publisher with the provided details
+      tags:
+        - Publishers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePublisherRequest'
+      responses:
+        '201':
+          description: Publisher created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publisher'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherErrorResponse'
+
+  /api/v1/publishers/{slug}:
+    get:
+      summary: Get publisher by slug
+      description: Returns a single active publisher by their slug
+      tags:
+        - Publishers
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Unique slug identifier for the publisher
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publisher'
+        '404':
+          description: Publisher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherNotFoundError'
+    patch:
+      summary: Update publisher
+      description: Updates an existing publisher's details
+      tags:
+        - Publishers
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Unique slug identifier for the publisher
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePublisherRequest'
+      responses:
+        '200':
+          description: Publisher updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publisher'
+        '404':
+          description: Publisher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherErrorResponse'
+
+  /api/v1/publishers/{id}/disable:
+    patch:
+      summary: Disable publisher
+      description: Soft deletes a publisher by setting is_disabled to true
+      tags:
+        - Publishers
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Unique slug identifier for the publisher
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Publisher disabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publisher'
+        '404':
+          description: Publisher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherNotFoundError'
+
+  /api/v1/publisher_texts:
+    get:
+      summary: Get list of publisher texts
+      description: Returns a paginated list of publisher texts
+      tags:
+        - PublisherTexts
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublisherText'
+    post:
+      summary: Create a new publisher text
+      description: Creates a new publisher text with the provided details
+      tags:
+        - PublisherTexts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePublisherTextRequest'
+      responses:
+        '201':
+          description: Publisher text created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherText'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherTextErrorResponse'
+
+  /api/v1/publisher_texts/{id}:
+    get:
+      summary: Get publisher text by ID
+      description: Returns a single publisher text by ID
+      tags:
+        - PublisherTexts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the publisher text
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherText'
+        '404':
+          description: Publisher text not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherTextNotFoundError'
+    patch:
+      summary: Update publisher text
+      description: Updates an existing publisher text
+      tags:
+        - PublisherTexts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the publisher text
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePublisherTextRequest'
+      responses:
+        '200':
+          description: Publisher text updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherText'
+        '404':
+          description: Publisher text not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherTextNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherTextErrorResponse'
+    delete:
+      summary: Delete publisher text
+      description: Deletes a publisher text
+      tags:
+        - PublisherTexts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the publisher text
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Publisher text deleted successfully
+        '404':
+          description: Publisher text not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherTextNotFoundError'
+
+  /api/v1/publishers/{slug}/publisher_texts:
+    get:
+      summary: Get publisher texts by publisher slug
+      description: Returns a list of publisher texts for a specific publisher
+      tags:
+        - PublisherTexts
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Unique slug identifier for the publisher
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublisherText'
+        '404':
+          description: Publisher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherNotFoundError'
+    post:
+      summary: Create publisher text for a publisher
+      description: Creates a new publisher text for a specific publisher
+      tags:
+        - PublisherTexts
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Unique slug identifier for the publisher
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePublisherTextRequest'
+      responses:
+        '201':
+          description: Publisher text created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherText'
+        '404':
+          description: Publisher not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublisherTextErrorResponse'
+
 components:
   schemas:
     User:
@@ -2194,3 +2560,199 @@ components:
             type: string
           description: List of validation error messages
           example: ["Name has already been taken", "Slug has already been taken"]
+
+    Publisher:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique publisher ID
+          example: 1
+        name:
+          type: string
+          description: Publisher name
+          example: "Nintendo"
+        type:
+          type: string
+          description: Publisher type
+          enum: [PUBLISHER, DEVELOPER, PERSON]
+          example: "PUBLISHER"
+        slug:
+          type: string
+          description: URL-friendly unique identifier
+          example: "nintendo"
+        games_count:
+          type: integer
+          description: Number of active games published by this publisher
+          example: 150
+        is_disabled:
+          type: boolean
+          description: Whether the publisher is disabled (soft delete)
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Record update timestamp
+      required:
+        - id
+        - name
+        - type
+        - slug
+        - games_count
+        - is_disabled
+        - created_at
+        - updated_at
+
+    CreatePublisherRequest:
+      type: object
+      properties:
+        publisher:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Publisher name (must be unique)
+              example: "Nintendo"
+            type:
+              type: string
+              description: Publisher type
+              enum: [PUBLISHER, DEVELOPER, PERSON]
+              example: "PUBLISHER"
+            slug:
+              type: string
+              description: Custom slug (optional, auto-generated if not provided)
+              example: "nintendo"
+          required:
+            - name
+            - type
+
+    UpdatePublisherRequest:
+      type: object
+      properties:
+        publisher:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Publisher name
+              example: "Nintendo Co., Ltd."
+            type:
+              type: string
+              description: Publisher type
+              enum: [PUBLISHER, DEVELOPER, PERSON]
+              example: "PUBLISHER"
+            slug:
+              type: string
+              description: Custom slug
+              example: "nintendo-co"
+
+    PublisherErrorResponse:
+      type: array
+      items:
+        type: string
+      example: ["Name has already been taken", "Type is not included in the list"]
+
+    PublisherNotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Publisher not found"
+
+    PublisherText:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique publisher text ID
+          example: 1
+        publisher_id:
+          type: integer
+          description: ID of the publisher this text belongs to
+          example: 1
+        lang_code:
+          type: string
+          description: Language code (ISO 639-1)
+          minLength: 2
+          maxLength: 2
+          pattern: "^[a-z]{2}$"
+          example: "en"
+        description:
+          type: string
+          description: Publisher description in the specified language
+          maxLength: 10000
+          example: "Nintendo Co., Ltd. is a Japanese multinational video game company..."
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Record update timestamp
+      required:
+        - id
+        - publisher_id
+        - lang_code
+        - created_at
+        - updated_at
+
+    CreatePublisherTextRequest:
+      type: object
+      properties:
+        publisher_text:
+          type: object
+          properties:
+            publisher_id:
+              type: integer
+              description: ID of the publisher
+              example: 1
+            lang_code:
+              type: string
+              description: Language code (ISO 639-1)
+              minLength: 2
+              maxLength: 2
+              example: "en"
+            description:
+              type: string
+              description: Publisher description
+              maxLength: 10000
+              example: "Description text..."
+          required:
+            - publisher_id
+            - lang_code
+
+    UpdatePublisherTextRequest:
+      type: object
+      properties:
+        publisher_text:
+          type: object
+          properties:
+            lang_code:
+              type: string
+              description: Language code (ISO 639-1)
+              minLength: 2
+              maxLength: 2
+              example: "en"
+            description:
+              type: string
+              description: Updated publisher description
+              maxLength: 10000
+              example: "Updated description..."
+
+    PublisherTextErrorResponse:
+      type: array
+      items:
+        type: string
+      example: ["Lang code has already been taken", "Publisher must exist"]
+
+    PublisherTextNotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Publisher text not found"

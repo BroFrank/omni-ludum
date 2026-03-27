@@ -28,7 +28,7 @@ class Platform < ApplicationRecord
     return if name.blank?
 
     self.slug = name.downcase
-               .gsub(/\s+/, '-')
-               .gsub(/[^a-z0-9\-]/, '')
+               .gsub(/\s+/, "-")
+               .gsub(/[^a-z0-9\-]/, "")
   end
 end

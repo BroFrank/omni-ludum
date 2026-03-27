@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_25_173218) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_27_171152) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -90,10 +90,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_25_173218) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "platform_id"
+    t.bigint "publisher_id"
     t.index ["base_game_id"], name: "index_games_on_base_game_id"
     t.index ["is_disabled"], name: "index_games_on_is_disabled"
     t.index ["name"], name: "index_games_on_name"
     t.index ["platform_id"], name: "index_games_on_platform_id"
+    t.index ["publisher_id"], name: "index_games_on_publisher_id"
     t.index ["release_year"], name: "index_games_on_release_year"
   end
 
@@ -120,6 +122,29 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_25_173218) do
     t.index ["is_disabled"], name: "index_platforms_on_is_disabled"
     t.index ["name"], name: "index_platforms_on_name"
     t.index ["slug"], name: "index_platforms_on_slug", unique: true
+  end
+
+  create_table "publisher_texts", force: :cascade do |t|
+    t.bigint "publisher_id", null: false
+    t.string "lang_code", limit: 2, null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["publisher_id", "lang_code"], name: "index_publisher_texts_on_publisher_id_and_lang_code", unique: true
+    t.index ["publisher_id"], name: "index_publisher_texts_on_publisher_id"
+  end
+
+  create_table "publishers", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "type", null: false
+    t.string "slug", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "is_disabled", default: false, null: false
+    t.index ["is_disabled"], name: "index_publishers_on_is_disabled"
+    t.index ["name"], name: "index_publishers_on_name", unique: true
+    t.index ["slug"], name: "index_publishers_on_slug", unique: true
+    t.index ["type"], name: "index_publishers_on_type"
   end
 
   create_table "reviews", force: :cascade do |t|
@@ -195,7 +220,9 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_25_173218) do
   add_foreign_key "game_rating_recalculations", "games", on_delete: :cascade
   add_foreign_key "games", "games", column: "base_game_id"
   add_foreign_key "games", "platforms"
+  add_foreign_key "games", "publishers", on_delete: :nullify
   add_foreign_key "links", "games", on_delete: :cascade
+  add_foreign_key "publisher_texts", "publishers", on_delete: :cascade
   add_foreign_key "reviews", "games", on_delete: :cascade
   add_foreign_key "reviews", "users", on_delete: :cascade
   add_foreign_key "users_playtime_recalculations", "games", on_delete: :cascade

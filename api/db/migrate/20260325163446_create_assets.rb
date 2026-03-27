@@ -14,8 +14,8 @@ class CreateAssets < ActiveRecord::Migration[7.2]
       t.index :game_id
       t.index :asset_type
       t.index :is_disabled
-      t.index [:game_id, :asset_type]
-      t.index [:game_id, :order_index]
+      t.index [ :game_id, :asset_type ]
+      t.index [ :game_id, :order_index ]
     end
 
     add_foreign_key :assets, :games, on_delete: :cascade

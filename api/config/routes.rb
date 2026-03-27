@@ -26,6 +26,16 @@ Rails.application.routes.draw do
         end
       end
 
+      resources :publishers, param: :slug, except: [ :destroy ] do
+        member do
+          patch :disable
+        end
+
+        resources :publisher_texts, only: %i[index create], param: :publisher_slug
+      end
+
+      resources :publisher_texts, except: [ :new, :edit ]
+
       resources :reviews, except: [ :new, :edit ]
 
       resources :users_playtimes, except: [ :new, :edit ]

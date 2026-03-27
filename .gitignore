@@ -41,6 +41,10 @@ api/gemfiles/Gemfile.lock
 # Testing
 api/coverage/
 
+# Active Storage test files
+api/tmp/storage/**/*
+!api/tmp/storage/.keep
+
 # Documentation
 api/doc/
 api/rdoc/

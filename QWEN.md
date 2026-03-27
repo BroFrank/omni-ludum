@@ -336,6 +336,7 @@ Auto-generated from username:
 | `is_disabled` | boolean | Default: false | Soft delete flag |
 | `base_game_id` | bigint | FK → games.id, nullable | Reference to original game |
 | `platform_id` | bigint | FK → platforms.id, nullable | Reference to platform |
+| `publisher_id` | bigint | FK → publishers.id, nullable | Reference to publisher |
 | `created_at` | datetime | Auto-generated | Creation timestamp |
 | `updated_at` | datetime | Auto-generated | Last update timestamp |
 
@@ -343,6 +344,7 @@ Auto-generated from username:
 
 - `belongs_to :platform, optional: true` — associated platform (optional for backward compatibility)
 - `belongs_to :base_game, class_name: "Game", optional: true` — associated base game
+- `belongs_to :publisher, optional: true` — associated publisher
 - `has_many :dlcs, class_name: "Game", foreign_key: :base_game_id` — DLCs for this game
 
 ### Self-Referencing Association
@@ -429,6 +431,127 @@ The following platforms are seeded by default:
 - Xbox, Xbox One, Xbox Series X/S
 - Steam Deck, Mobile (iOS), Mobile (Android)
 - Nintendo 3DS, Nintendo DS, PlayStation Vita, PSP, Game Boy Advance
+
+## Publisher Entity
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique publisher ID |
+| `name` | string | Required, unique (case-insensitive) | Publisher name |
+| `type` | string | Required, one of PUBLISHER_TYPES | Publisher type |
+| `slug` | string | Required, unique (case-insensitive) | URL-friendly identifier |
+| `is_disabled` | boolean | Default: false | Soft delete flag |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Publisher Types (`PUBLISHER_TYPES`)
+
+```ruby
+PUBLISHER_TYPES = {
+  PUBLISHER: 'PUBLISHER',   # Large publishing companies
+  DEVELOPER: 'DEVELOPER',   # Developer studios
+  PERSON: 'PERSON'          # Solo developers
+}.freeze
+```
+
+### Publisher Text Locales (`PUBLISHER_TEXT_LOCALES`)
+
+```ruby
+PUBLISHER_TEXT_LOCALES = {
+  ENGLISH: 'en',
+  RUSSIAN: 'ru'
+}.freeze
+```
+
+### Associations
+
+- `has_many :games, dependent: :nullify` — games published by this publisher
+
+### Scopes
+
+- `Publisher.active` — returns publishers where `is_disabled: false`
+- `Publisher.disabled` — returns publishers where `is_disabled: true`
+- `Publisher.publishers` — returns publishers with type PUBLISHER
+- `Publisher.developers` — returns publishers with type DEVELOPER
+- `Publisher.persons` — returns publishers with type PERSON
+
+### Instance Methods
+
+- `publisher?` — true if type is PUBLISHER
+- `developer?` — true if type is DEVELOPER
+- `person?` — true if type is PERSON
+- `disable!` — soft deletes the publisher and nullifies associated games
+- `restore!` — restores a soft-deleted publisher
+
+### Class Methods
+
+- `Publisher.find_by_slug!(slug)` — find active publisher by slug (raises error if not found)
+- `Publisher.find_by_slug(slug)` — find active publisher by slug (returns nil if not found)
+
+### Slug Generation
+
+Auto-generated from name if not provided:
+- Converted to lowercase
+- Spaces replaced with hyphens
+- Special characters removed
+- Example: `"Nintendo"` → `"nintendo"`
+- Example: `"CD Projekt Red"` → `"cd-projekt-red"`
+
+### Seed Data
+
+The following publishers are seeded by default:
+- **PUBLISHER**: Nintendo, Sony Interactive Entertainment, Microsoft Studios, Valve
+- **DEVELOPER**: CD Projekt Red, FromSoftware, Indie Studio
+- **PERSON**: Toby Fox, Eric Barone, Lucas Pope
+
+### Publisher Methods
+
+- `description_for(locale)` — returns description for specified locale (e.g., "en", "ru")
+- `all_descriptions` — returns all descriptions ordered by lang_code
+
+## PublisherText Entity
+
+### Overview
+
+Localized descriptions for publishers. Each publisher can have multiple descriptions in different languages.
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique publisher text ID |
+| `publisher_id` | bigint | FK → publishers.id, required | Publisher this text belongs to |
+| `lang_code` | string | Required, 2 chars, `[a-z]{2}` | Language code (ISO 639-1) |
+| `description` | text | Max 10000 chars, optional | Publisher description |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Associations
+
+- `belongs_to :publisher` — associated publisher
+
+### Scopes
+
+- `PublisherText.active` — returns texts for active publishers only
+- `PublisherText.by_lang(lang_code)` — filters by language code
+- `PublisherText.for_publisher(publisher_id)` — filters by publisher
+
+### Unique Constraint
+
+Only one description per language per publisher (enforced by unique index on `[:publisher_id, :lang_code]`).
+
+### Cascade Delete
+
+When a publisher is destroyed, all its publisher_texts are destroyed automatically (`dependent: :destroy`).
+
+### Seed Data
+
+The following publisher texts are seeded by default (en + ru for each publisher):
+- Nintendo, Sony Interactive Entertainment, Microsoft Studios, Valve
+- CD Projekt Red, FromSoftware
+- Toby Fox, Eric Barone
 
 ## Review Entity
 
@@ -830,6 +953,28 @@ All endpoints are under `/api/v1` namespace.
 |--------|----------|-------------|
 | GET | `/api/v1/platforms` | List active platforms (paginated) |
 | GET | `/api/v1/platforms/:slug` | Get platform by slug |
+
+### Publishers API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/publishers` | List active publishers (paginated) |
+| GET | `/api/v1/publishers/:slug` | Get publisher by slug |
+| POST | `/api/v1/publishers` | Create new publisher |
+| PATCH | `/api/v1/publishers/:slug` | Update publisher |
+| PATCH | `/api/v1/publishers/:slug/disable` | Soft delete publisher |
+
+### PublisherTexts API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/publisher_texts` | List all publisher texts (paginated) |
+| GET | `/api/v1/publisher_texts/:id` | Get publisher text by ID |
+| GET | `/api/v1/publishers/:slug/publisher_texts` | List texts for a publisher |
+| POST | `/api/v1/publisher_texts` | Create new publisher text |
+| POST | `/api/v1/publishers/:slug/publisher_texts` | Create text for a publisher |
+| PATCH | `/api/v1/publisher_texts/:id` | Update publisher text |
+| DELETE | `/api/v1/publisher_texts/:id` | Delete publisher text |
 
 ### Reviews API
 

@@ -53,7 +53,7 @@ class AssetUploadServiceTest < ActiveSupport::TestCase
   end
 
   test "upload raises error for file too large" do
-    large_file = Tempfile.new(['large_file', '.png'])
+    large_file = Tempfile.new([ "large_file", ".png" ])
     large_file.binmode
     large_file.write("x" * (11.megabytes))
     large_file.rewind

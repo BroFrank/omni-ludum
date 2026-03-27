@@ -1,6 +1,7 @@
 class Game < ApplicationRecord
   belongs_to :platform, optional: true
   belongs_to :base_game, class_name: "Game", optional: true
+  belongs_to :publisher, optional: true
   has_many :dlcs, class_name: "Game", foreign_key: :base_game_id
   has_many :reviews, dependent: :nullify
   has_many :users_playtimes, dependent: :nullify
