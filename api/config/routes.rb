@@ -63,12 +63,12 @@ Rails.application.routes.draw do
       end
 
       resources :games, only: [] do
-        resources :reviews, only: [ :index, :create ], param: :game_name
-        resources :users_playtimes, only: [ :index, :create ], param: :game_name
-        resources :links, only: [ :index, :create ], param: :game_name
-        resources :assets, only: [ :index, :create ], param: :game_name
-        resources :game_texts, only: [ :index, :create ], param: :game_name
-        resources :game_genres, only: [ :index, :create, :destroy ], param: :game_name
+        resources :reviews, only: [ :index, :create ]
+        resources :users_playtimes, only: [ :index, :create ]
+        resources :links, only: [ :index, :create ]
+        resources :assets, only: [ :index, :create ]
+        resources :game_texts, only: [ :index, :create ]
+        resources :game_genres, only: [ :index, :create, :destroy ]
       end
 
       resources :users, only: [] do
