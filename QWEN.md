@@ -222,10 +222,11 @@ npm run lint              # ESLint
 
 ## Current State
 
-- **Backend**: User, Game, Review, and UsersPlaytime models implemented with full CRUD API
+- **Backend**: Full CRUD API for User, Game, Platform, Publisher, PublisherText, Genre, GenreText, GameGenre, Review, UsersPlaytime, Link, and Asset models
 - **Frontend**: Basic SvelteKit structure with Tailwind CSS
 - **Documentation**: Swagger UI available at `/api-docs`
 - **Background Jobs**: Solid Queue configured for async job processing (rating and playtime recalculation)
+- **Seed Data**: Default users, platforms, publishers, publisher texts, genres, and genre texts
 
 ## User Entity
 
@@ -585,6 +586,139 @@ When a game is destroyed, all its game_texts are destroyed automatically (`depen
 - `description_for(locale)` — returns description for specified locale (e.g., "en", "ru")
 - `trivia_for(locale)` — returns trivia for specified locale
 - `all_texts` — returns all texts ordered by lang_code
+
+## Genre Entity
+
+### Overview
+
+Genres for games. Each game can have multiple genres through the `game_genres` join table. Genres support localized descriptions.
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique genre ID |
+| `name` | string | Required, unique (case-insensitive) | Genre name in English (e.g., "RPG", "Action") |
+| `slug` | string | Required, unique (case-insensitive) | URL-friendly identifier |
+| `is_disabled` | boolean | Default: false | Soft delete flag |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Associations
+
+- `has_many :genre_texts, dependent: :destroy` — localized descriptions
+- `has_many :game_genres, dependent: :destroy` — game associations
+- `has_many :games, through: :game_genres` — games with this genre
+
+### Scopes
+
+- `Genre.active` — returns genres where `is_disabled: false`
+- `Genre.disabled` — returns genres where `is_disabled: true`
+
+### Instance Methods
+
+- `disable!` — soft deletes the genre and nullifies associated game_genres
+- `restore!` — restores a soft-deleted genre
+- `description_for(locale)` — returns description for specified locale (e.g., "en", "ru")
+- `all_descriptions` — returns all descriptions ordered by lang_code
+
+### Class Methods
+
+- `Genre.find_by_slug!(slug)` — find active genre by slug (raises error if not found)
+- `Genre.find_by_slug(slug)` — find active genre by slug (returns nil if not found)
+
+### Slug Generation
+
+Auto-generated from name if not provided:
+- Converted to lowercase
+- Spaces replaced with hyphens
+- Special characters removed
+- Example: `"Role Playing Game"` → `"role-playing-game"`
+- Example: `"Hack & Slash"` → `"hack-slash"`
+
+### Seed Data
+
+The following genres are seeded by default:
+- Action, Adventure, RPG, Strategy, Simulation
+- Sports, Racing, Puzzle, Platformer, Fighting
+- Horror, Stealth, Survival, MOBA, Battle Royale
+- Souls-like, Metroidvania, Roguelike, Roguelite
+- Visual Novel, Card Game, Board Game
+
+## GenreText Entity
+
+### Overview
+
+Localized descriptions for genres. Each genre can have multiple descriptions in different languages.
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique genre text ID |
+| `genre_id` | bigint | FK → genres.id, required | Genre this text belongs to |
+| `lang_code` | string | Required, 2 chars, `[a-z]{2}` | Language code (ISO 639-1) |
+| `description` | text | Max 10000 chars, optional | Genre description |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Associations
+
+- `belongs_to :genre` — associated genre
+
+### Scopes
+
+- `GenreText.active` — returns texts for active genres only
+- `GenreText.by_lang(lang_code)` — filters by language code
+- `GenreText.for_genre(genre_id)` — filters by genre
+
+### Unique Constraint
+
+Only one description per language per genre (enforced by unique index on `[:genre_id, :lang_code]`).
+
+### Cascade Delete
+
+When a genre is destroyed, all its genre_texts are destroyed automatically (`dependent: :destroy`).
+
+## GameGenre Entity
+
+### Overview
+
+Join table for many-to-many relationship between games and genres.
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique game genre ID |
+| `game_id` | bigint | FK → games.id, required | Game being associated |
+| `genre_id` | bigint | FK → genres.id, required | Genre being associated |
+| `is_disabled` | boolean | Default: false | Soft delete flag |
+| `created_at` | datetime | Auto-generated | Creation timestamp |
+| `updated_at` | datetime | Auto-generated | Last update timestamp |
+
+### Associations
+
+- `belongs_to :game` — associated game
+- `belongs_to :genre` — associated genre
+
+### Scopes
+
+- `GameGenre.active` — returns game_genres where `is_disabled: false`
+- `GameGenre.disabled` — returns game_genres where `is_disabled: true`
+
+### Unique Constraint
+
+A game can only have one active association per genre (enforced by unique partial index on `[:game_id, :genre_id]` where `is_disabled = false`).
+
+### Instance Methods
+
+- `disable!` — soft deletes the association
+- `restore!` — restores a soft-deleted association
+
+### Cascade Delete
+
+When a game or genre is destroyed, all associated game_genres are destroyed automatically (`dependent: :destroy`).
 
 ## Review Entity
 
@@ -1020,6 +1154,38 @@ All endpoints are under `/api/v1` namespace.
 | POST | `/api/v1/games/:game_id/game_texts` | Create text for a game |
 | PATCH | `/api/v1/game_texts/:id` | Update game text |
 | DELETE | `/api/v1/game_texts/:id` | Delete game text |
+
+### Genres API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/genres` | List all genres (paginated) |
+| GET | `/api/v1/genres/:slug` | Get genre by slug |
+| POST | `/api/v1/genres` | Create new genre |
+| PATCH | `/api/v1/genres/:slug` | Update genre |
+| PATCH | `/api/v1/genres/:slug/disable` | Soft delete genre |
+
+### GenreTexts API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/genre_texts` | List all genre texts (paginated) |
+| GET | `/api/v1/genre_texts/:id` | Get genre text by ID |
+| GET | `/api/v1/genres/:genre_slug/genre_texts` | List texts for a genre |
+| POST | `/api/v1/genre_texts` | Create new genre text |
+| POST | `/api/v1/genres/:genre_slug/genre_texts` | Create text for a genre |
+| PATCH | `/api/v1/genre_texts/:id` | Update genre text |
+| DELETE | `/api/v1/genre_texts/:id` | Delete genre text |
+
+### GameGenres API
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/game_genres` | List all game genres (paginated) |
+| POST | `/api/v1/game_genres` | Create game genre association |
+| DELETE | `/api/v1/game_genres` | Delete game genre association |
+| GET | `/api/v1/games/:game_id/game_genres` | List genres for a game (paginated) |
+| POST | `/api/v1/games/:game_id/game_genres` | Add genre to a game |
 
 ### Reviews API
 

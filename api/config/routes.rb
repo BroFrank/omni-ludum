@@ -38,6 +38,18 @@ Rails.application.routes.draw do
 
       resources :game_texts, except: [ :new, :edit ]
 
+      resources :genres, param: :slug, except: [ :destroy ] do
+        member do
+          patch :disable
+        end
+
+        resources :genre_texts, only: %i[index create], param: :genre_slug
+      end
+
+      resources :genre_texts, except: [ :new, :edit ]
+
+      resources :game_genres, only: [ :index, :create, :destroy ]
+
       resources :reviews, except: [ :new, :edit ]
 
       resources :users_playtimes, except: [ :new, :edit ]
@@ -56,6 +68,7 @@ Rails.application.routes.draw do
         resources :links, only: [ :index, :create ], param: :game_name
         resources :assets, only: [ :index, :create ], param: :game_name
         resources :game_texts, only: [ :index, :create ], param: :game_name
+        resources :game_genres, only: [ :index, :create, :destroy ], param: :game_name
       end
 
       resources :users, only: [] do

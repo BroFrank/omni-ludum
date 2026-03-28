@@ -8,6 +8,8 @@ class Game < ApplicationRecord
   has_many :links, dependent: :destroy
   has_many :assets, dependent: :destroy
   has_many :game_texts, dependent: :destroy
+  has_many :game_genres, dependent: :destroy
+  has_many :genres, through: :game_genres
 
   validates :name, presence: true
   validates :release_year, numericality: { only_integer: true, allow_nil: true }

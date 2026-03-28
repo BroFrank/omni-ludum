@@ -610,6 +610,537 @@ paths:
               schema:
                 $ref: '#/components/schemas/GameTextErrorResponse'
 
+  /api/v1/genres:
+    get:
+      summary: Get list of active genres
+      description: Returns a paginated list of active (non-disabled) genres
+      tags:
+        - Genres
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Genre'
+    post:
+      summary: Create a new genre
+      description: Creates a new genre with the provided details
+      tags:
+        - Genres
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGenreRequest'
+      responses:
+        '201':
+          description: Genre created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genre'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreErrorResponse'
+
+  /api/v1/genres/{slug}:
+    get:
+      summary: Get genre by slug
+      description: Returns a single active genre by their slug
+      tags:
+        - Genres
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Unique slug identifier for the genre
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genre'
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreNotFoundError'
+    patch:
+      summary: Update genre
+      description: Updates an existing genre's details
+      tags:
+        - Genres
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Unique slug identifier for the genre
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGenreRequest'
+      responses:
+        '200':
+          description: Genre updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genre'
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreErrorResponse'
+
+  /api/v1/genres/{slug}/disable:
+    patch:
+      summary: Disable genre
+      description: Soft deletes a genre by setting is_disabled to true
+      tags:
+        - Genres
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Unique slug identifier for the genre
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Genre disabled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genre'
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreNotFoundError'
+
+  /api/v1/genre_texts:
+    get:
+      summary: Get list of genre texts
+      description: Returns a paginated list of genre texts
+      tags:
+        - GenreTexts
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GenreText'
+    post:
+      summary: Create a new genre text
+      description: Creates a new genre text with the provided details
+      tags:
+        - GenreTexts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGenreTextRequest'
+      responses:
+        '201':
+          description: Genre text created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreText'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreTextErrorResponse'
+
+  /api/v1/genre_texts/{id}:
+    get:
+      summary: Get genre text by ID
+      description: Returns a single genre text by ID
+      tags:
+        - GenreTexts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the genre text
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreText'
+        '404':
+          description: Genre text not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreTextNotFoundError'
+    patch:
+      summary: Update genre text
+      description: Updates an existing genre text
+      tags:
+        - GenreTexts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the genre text
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGenreTextRequest'
+      responses:
+        '200':
+          description: Genre text updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreText'
+        '404':
+          description: Genre text not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreTextNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreTextErrorResponse'
+    delete:
+      summary: Delete genre text
+      description: Deletes a genre text
+      tags:
+        - GenreTexts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Unique ID of the genre text
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Genre text deleted successfully
+        '404':
+          description: Genre text not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreTextNotFoundError'
+
+  /api/v1/genres/{genre_slug}/genre_texts:
+    get:
+      summary: Get genre texts by genre slug
+      description: Returns a list of genre texts for a specific genre
+      tags:
+        - GenreTexts
+      parameters:
+        - name: genre_slug
+          in: path
+          required: true
+          description: Unique slug of the genre
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GenreText'
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreNotFoundError'
+    post:
+      summary: Create genre text for a genre
+      description: Creates a new genre text for a specific genre
+      tags:
+        - GenreTexts
+      parameters:
+        - name: genre_slug
+          in: path
+          required: true
+          description: Unique slug of the genre
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGenreTextRequest'
+      responses:
+        '201':
+          description: Genre text created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreText'
+        '404':
+          description: Genre not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreTextErrorResponse'
+
+  /api/v1/game_genres:
+    get:
+      summary: Get list of game genres
+      description: Returns a paginated list of game genres (associations between games and genres)
+      tags:
+        - GameGenres
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameGenre'
+    post:
+      summary: Create a new game genre association
+      description: Creates a new association between a game and a genre
+      tags:
+        - GameGenres
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameGenreRequest'
+      responses:
+        '201':
+          description: Game genre association created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameGenre'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameGenreErrorResponse'
+    delete:
+      summary: Delete game genre association
+      description: Deletes an association between a game and a genre
+      tags:
+        - GameGenres
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameGenreRequest'
+      responses:
+        '204':
+          description: Game genre association deleted successfully
+        '404':
+          description: Game genre association not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Game genre not found"
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameGenreErrorResponse'
+
+  /api/v1/games/{game_id}/game_genres:
+    get:
+      summary: Get game genres by game name
+      description: Returns a list of genre associations for a specific game
+      tags:
+        - GameGenres
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: Unique name of the game
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameGenre'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameNotFoundError'
+    post:
+      summary: Create game genre association for a game
+      description: Creates a new genre association for a specific game
+      tags:
+        - GameGenres
+      parameters:
+        - name: game_id
+          in: path
+          required: true
+          description: Unique name of the game
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGameGenreRequest'
+      responses:
+        '201':
+          description: Game genre association created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameGenre'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameNotFoundError'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameGenreErrorResponse'
+
   /api/v1/reviews:
     get:
       summary: Get list of reviews
@@ -3085,3 +3616,248 @@ components:
         error:
           type: string
           example: "Game text not found"
+
+    Genre:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique genre ID
+          example: 1
+        name:
+          type: string
+          description: Genre name in English
+          example: "RPG"
+        slug:
+          type: string
+          description: URL-friendly unique identifier
+          example: "rpg"
+        is_disabled:
+          type: boolean
+          description: Whether the genre is disabled (soft delete)
+          example: false
+        descriptions:
+          type: array
+          items:
+            type: object
+            properties:
+              lang:
+                type: string
+                example: "en"
+              description:
+                type: string
+                example: "Role-playing game genre..."
+          description: List of descriptions in different languages
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Record update timestamp
+      required:
+        - id
+        - name
+        - slug
+        - is_disabled
+        - created_at
+        - updated_at
+
+    CreateGenreRequest:
+      type: object
+      properties:
+        genre:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Genre name (must be unique)
+              example: "RPG"
+            slug:
+              type: string
+              description: Custom slug (optional, auto-generated if not provided)
+              example: "rpg"
+          required:
+            - name
+
+    UpdateGenreRequest:
+      type: object
+      properties:
+        genre:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Genre name
+              example: "Role-Playing Game"
+            slug:
+              type: string
+              description: Custom slug
+              example: "role-playing-game"
+
+    GenreErrorResponse:
+      type: array
+      items:
+        type: string
+      example: ["Name has already been taken", "Slug has already been taken"]
+
+    GenreNotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Genre not found"
+
+    GenreText:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique genre text ID
+          example: 1
+        genre_id:
+          type: integer
+          description: ID of the genre this text belongs to
+          example: 1
+        lang_code:
+          type: string
+          description: Language code (ISO 639-1)
+          minLength: 2
+          maxLength: 2
+          pattern: "^[a-z]{2}$"
+          example: "en"
+        description:
+          type: string
+          description: Genre description in the specified language
+          maxLength: 10000
+          example: "Role-playing game is a video game genre..."
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Record update timestamp
+      required:
+        - id
+        - genre_id
+        - lang_code
+        - created_at
+        - updated_at
+
+    CreateGenreTextRequest:
+      type: object
+      properties:
+        genre_text:
+          type: object
+          properties:
+            genre_id:
+              type: integer
+              description: ID of the genre
+              example: 1
+            lang_code:
+              type: string
+              description: Language code (ISO 639-1)
+              minLength: 2
+              maxLength: 2
+              example: "en"
+            description:
+              type: string
+              description: Genre description
+              maxLength: 10000
+              example: "Description text..."
+          required:
+            - genre_id
+            - lang_code
+
+    UpdateGenreTextRequest:
+      type: object
+      properties:
+        genre_text:
+          type: object
+          properties:
+            lang_code:
+              type: string
+              description: Language code (ISO 639-1)
+              minLength: 2
+              maxLength: 2
+              example: "en"
+            description:
+              type: string
+              description: Updated genre description
+              maxLength: 10000
+              example: "Updated description..."
+
+    GenreTextErrorResponse:
+      type: array
+      items:
+        type: string
+      example: ["Lang code has already been taken", "Genre must exist"]
+
+    GenreTextNotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Genre text not found"
+
+    GameGenre:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique game genre ID
+          example: 1
+        game_id:
+          type: integer
+          description: ID of the game
+          example: 1
+        genre_id:
+          type: integer
+          description: ID of the genre
+          example: 1
+        is_disabled:
+          type: boolean
+          description: Whether the game genre is disabled (soft delete)
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          description: Record creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Record update timestamp
+      required:
+        - id
+        - game_id
+        - genre_id
+        - is_disabled
+        - created_at
+        - updated_at
+
+    CreateGameGenreRequest:
+      type: object
+      properties:
+        game_genre:
+          type: object
+          properties:
+            game_id:
+              type: integer
+              description: ID of the game
+              example: 1
+            genre_id:
+              type: integer
+              description: ID of the genre
+              example: 1
+          required:
+            - game_id
+            - genre_id
+
+    GameGenreErrorResponse:
+      type: array
+      items:
+        type: string
+      example: ["Game has already been associated with this genre", "Game must exist", "Genre must exist"]

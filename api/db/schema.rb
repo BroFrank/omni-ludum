@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_27_171153) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_28_175713) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -62,6 +62,17 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_27_171153) do
     t.check_constraint "order_index IS NULL OR order_index >= 0", name: "check_order_index_non_negative"
   end
 
+  create_table "game_genres", force: :cascade do |t|
+    t.bigint "game_id", null: false
+    t.bigint "genre_id", null: false
+    t.boolean "is_disabled", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id", "genre_id"], name: "index_game_genres_on_game_id_and_genre_id", unique: true
+    t.index ["game_id"], name: "index_game_genres_on_game_id"
+    t.index ["genre_id"], name: "index_game_genres_on_genre_id"
+  end
+
   create_table "game_rating_recalculations", force: :cascade do |t|
     t.bigint "game_id", null: false
     t.datetime "scheduled_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
@@ -108,6 +119,27 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_27_171153) do
     t.index ["platform_id"], name: "index_games_on_platform_id"
     t.index ["publisher_id"], name: "index_games_on_publisher_id"
     t.index ["release_year"], name: "index_games_on_release_year"
+  end
+
+  create_table "genre_texts", force: :cascade do |t|
+    t.bigint "genre_id", null: false
+    t.string "lang_code", limit: 2, null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["genre_id", "lang_code"], name: "index_genre_texts_on_genre_id_and_lang_code", unique: true
+    t.index ["genre_id"], name: "index_genre_texts_on_genre_id"
+  end
+
+  create_table "genres", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.boolean "is_disabled", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["is_disabled"], name: "index_genres_on_is_disabled"
+    t.index ["name"], name: "index_genres_on_name", unique: true
+    t.index ["slug"], name: "index_genres_on_slug", unique: true
   end
 
   create_table "links", force: :cascade do |t|
@@ -228,11 +260,14 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_27_171153) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "assets", "games", on_delete: :cascade
+  add_foreign_key "game_genres", "games", on_delete: :cascade
+  add_foreign_key "game_genres", "genres", on_delete: :cascade
   add_foreign_key "game_rating_recalculations", "games", on_delete: :cascade
   add_foreign_key "game_texts", "games", on_delete: :cascade
   add_foreign_key "games", "games", column: "base_game_id"
   add_foreign_key "games", "platforms"
   add_foreign_key "games", "publishers", on_delete: :nullify
+  add_foreign_key "genre_texts", "genres", on_delete: :cascade
   add_foreign_key "links", "games", on_delete: :cascade
   add_foreign_key "publisher_texts", "publishers", on_delete: :cascade
   add_foreign_key "reviews", "games", on_delete: :cascade

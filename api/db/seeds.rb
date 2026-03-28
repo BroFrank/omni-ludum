@@ -141,3 +141,75 @@ publisher_texts.each do |pt_attrs|
 end
 
 puts "Created #{PublisherText.count} publisher texts"
+
+# Genres
+Genre.destroy_all
+
+genres = [
+  { name: 'Action', slug: 'action' },
+  { name: 'Adventure', slug: 'adventure' },
+  { name: 'RPG', slug: 'rpg' },
+  { name: 'Strategy', slug: 'strategy' },
+  { name: 'Simulation', slug: 'simulation' },
+  { name: 'Sports', slug: 'sports' },
+  { name: 'Racing', slug: 'racing' },
+  { name: 'Puzzle', slug: 'puzzle' },
+  { name: 'Platformer', slug: 'platformer' },
+  { name: 'Fighting', slug: 'fighting' },
+  { name: 'Horror', slug: 'horror' },
+  { name: 'Stealth', slug: 'stealth' },
+  { name: 'Survival', slug: 'survival' },
+  { name: 'MOBA', slug: 'moba' },
+  { name: 'Battle Royale', slug: 'battle-royale' },
+  { name: 'Souls-like', slug: 'souls-like' },
+  { name: 'Metroidvania', slug: 'metroidvania' },
+  { name: 'Roguelike', slug: 'roguelike' },
+  { name: 'Roguelite', slug: 'roguelite' },
+  { name: 'Visual Novel', slug: 'visual-novel' },
+  { name: 'Card Game', slug: 'card-game' },
+  { name: 'Board Game', slug: 'board-game' }
+]
+
+genres.each do |genre_attrs|
+  Genre.find_or_create_by!(slug: genre_attrs[:slug]) do |g|
+    g.name = genre_attrs[:name]
+  end
+end
+
+# Genre texts
+GenreText.destroy_all
+
+genre_texts = [
+  { name: 'Action', lang_code: 'en', description: 'Action games emphasize physical challenges, hand-eye coordination, and reflexes. Players typically engage in fast-paced combat or other action-oriented activities.' },
+  { name: 'Action', lang_code: 'ru', description: 'Экшен-игры делают упор на физические испытания, зрительно-моторную координацию и рефлексы. Игроки обычно участвуют в быстрых боях или других действиях.' },
+  { name: 'Adventure', lang_code: 'en', description: 'Adventure games focus on exploration, puzzle-solving, and narrative. Players interact with the game world and progress through a story.' },
+  { name: 'Adventure', lang_code: 'ru', description: 'Приключенческие игры сосредоточены на исследовании, решении головоломок и повествовании. Игроки взаимодействуют с игровым миром и продвигаются по сюжету.' },
+  { name: 'RPG', lang_code: 'en', description: 'Role-playing games where players control characters and make choices that affect the story. Features character progression, stats, and often turn-based or real-time combat.' },
+  { name: 'RPG', lang_code: 'ru', description: 'Ролевые игры, в которых игроки управляют персонажами и делают выбор, влияющий на сюжет. Включают прогрессирование персонажа, характеристики и часто пошаговые или реального времени бои.' },
+  { name: 'Strategy', lang_code: 'en', description: 'Strategy games require careful planning and decision-making to achieve victory. Includes real-time strategy (RTS) and turn-based strategy (TBS).' },
+  { name: 'Strategy', lang_code: 'ru', description: 'Стратегические игры требуют тщательного планирования и принятия решений для достижения победы. Включают стратегии в реальном времени (RTS) и пошаговые стратегии (TBS).' },
+  { name: 'Simulation', lang_code: 'en', description: 'Simulation games attempt to simulate real-world activities. Players manage resources, build structures, or control vehicles.' },
+  { name: 'Simulation', lang_code: 'ru', description: 'Симуляторы пытаются имитировать реальные виды деятельности. Игроки управляют ресурсами, строят сооружения или контролируют транспортные средства.' },
+  { name: 'Souls-like', lang_code: 'en', description: 'Games inspired by the Dark Souls series, featuring challenging combat, intricate level design, and deep lore. Known for high difficulty and rewarding gameplay.' },
+  { name: 'Souls-like', lang_code: 'ru', description: 'Игры, вдохновленные серией Dark Souls, с сложными боями, запутанным дизайном уровней и глубоким лором. Известны высокой сложностью и захватывающим геймплеем.' },
+  { name: 'Metroidvania', lang_code: 'en', description: 'Action-adventure games with interconnected maps and ability-gated progression. Players gain new abilities to access previously unreachable areas.' },
+  { name: 'Metroidvania', lang_code: 'ru', description: 'Приключенческие экшен-игры с взаимосвязанными картами и прогрессированием через получение способностей. Игроки получают новые способности для доступа к ранее недоступным областям.' },
+  { name: 'Roguelike', lang_code: 'en', description: 'Games featuring procedurally generated levels, permadeath, and turn-based gameplay. Each playthrough is unique and challenging.' },
+  { name: 'Roguelike', lang_code: 'ru', description: 'Игры с процедурно генерируемыми уровнями, перманентной смертью и пошаговым геймплеем. Каждое прохождение уникально и сложно.' },
+  { name: 'Roguelite', lang_code: 'en', description: 'Similar to roguelikes but with meta-progression. Death is not the end, as players can unlock permanent upgrades for future runs.' },
+  { name: 'Roguelite', lang_code: 'ru', description: 'Похожи на рогалики, но с мета-прогрессированием. Смерть не является концом, так как игроки могут разблокировать постоянные улучшения для будущих запусков.' },
+  { name: 'Visual Novel', lang_code: 'en', description: 'Interactive story-driven games with text-based narrative and static or animated visuals. Player choices may affect the story outcome.' },
+  { name: 'Visual Novel', lang_code: 'ru', description: 'Интерактивные игры, основанные на истории, с текстовым повествованием и статичной или анимированной визуализацией. Выбор игрока может повлиять на исход истории.' }
+]
+
+genre_texts.each do |gt_attrs|
+  genre = Genre.find_by(name: gt_attrs[:name])
+  GenreText.find_or_create_by!(
+    genre_id: genre&.id,
+    lang_code: gt_attrs[:lang_code]
+  ) do |gt|
+    gt.description = gt_attrs[:description]
+  end
+end
+
+puts "Created #{GenreText.count} genre texts"

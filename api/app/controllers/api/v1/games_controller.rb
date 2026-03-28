@@ -55,7 +55,9 @@ module Api
           :is_dlc,
           :is_mod,
           :base_game_id,
-          :platform_id
+          :platform_id,
+          :publisher_id,
+          genre_ids: []
         )
       end
     end
