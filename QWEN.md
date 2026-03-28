@@ -227,6 +227,7 @@ npm run lint              # ESLint
 - **Documentation**: Swagger UI available at `/api-docs`
 - **Background Jobs**: Solid Queue configured for async job processing (rating and playtime recalculation)
 - **Seed Data**: Default users, platforms, publishers, publisher texts, genres, and genre texts
+- **Audit Logging**: Complete audit logging system implemented with `AuditLog` model, `Auditable` concern, and `AuditLogService` for tracking all CREATE, UPDATE, DELETE operations on all models
 
 ## User Entity
 
@@ -825,6 +826,144 @@ Tracks pending playtime recalculation tasks for games. Used by `UsersPlaytimeRec
 ### Unique Constraint
 
 Only one pending recalculation per game (enforced by unique partial index on `[:game_id, :status]` where `status = 'pending'`).
+
+## AuditLog Entity
+
+### Overview
+
+Audit logging system that tracks all changes (CREATE, UPDATE, DELETE) to records in other tables. Provides a complete history of who changed what and when.
+
+### Model Fields
+
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| `id` | bigint | Primary key | Unique audit log ID |
+| `user_id` | bigint | FK → users.id, nullable | User who made the change (nullable for system actions) |
+| `table_name` | varchar | Required, indexed | Name of the table where change occurred |
+| `record_id` | bigint | Required | ID of the record that was changed |
+| `action` | varchar | Required, indexed: CREATE, UPDATE, DELETE | Type of action |
+| `old_values` | jsonb | Default: {} | Old field values (for UPDATE and DELETE) |
+| `new_values` | jsonb | Default: {} | New field values (for CREATE and UPDATE) |
+| `created_at` | datetime | Auto-generated, indexed | When the change occurred |
+
+### Associations
+
+- `belongs_to :user, optional: true` — associated user (nullable)
+
+### Scopes
+
+- `AuditLog.by_action(action)` — filter by action type
+- `AuditLog.by_table(table_name)` — filter by table name
+- `AuditLog.by_user(user_id)` — filter by user ID
+- `AuditLog.recent` — order by created_at DESC (newest first)
+
+### Constants (`AUDIT_ACTIONS`)
+
+```ruby
+AUDIT_ACTIONS = {
+  CREATE: 'CREATE',
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE'
+}.freeze
+```
+
+### Database Indexes
+
+- `index_audit_logs_on_user_id` — for filtering by user
+- `index_audit_logs_on_table_name` — for filtering by table
+- `index_audit_logs_on_action` — for filtering by action type
+- `index_audit_logs_on_created_at` — for sorting by time
+- `index_audit_logs_on_table_and_record` — composite index for fast lookups
+
+### Constraints
+
+- CHECK constraint on `action`: must be 'CREATE', 'UPDATE', or 'DELETE'
+- Foreign key on `user_id` with `ON DELETE NULLIFY` (user deletion doesn't remove audit logs)
+
+## AuditLogService
+
+### Overview
+
+Service class for creating and formatting audit log entries.
+
+### Methods
+
+- `AuditLogService.log_action(user_id:, table_name:, record_id:, action:, old_values:, new_values:)` — create audit log entry
+- `AuditLogService.log_create(user_id:, table_name:, record_id:, new_values:)` — convenience method for CREATE actions
+- `AuditLogService.log_update(user_id:, table_name:, record_id:, old_values:, new_values:)` — convenience method for UPDATE actions
+- `AuditLogService.log_delete(user_id:, table_name:, record_id:, old_values:)` — convenience method for DELETE actions
+- `AuditLogService.get_human_readable_table_name(table_name, locale)` — get localized table name
+- `AuditLogService.get_human_readable_field_name(table_name, field_name, locale)` — get localized field name
+- `AuditLogService.format_for_api(audit_log, locale)` — format audit log for API response with localization
+
+### Localization
+
+Table and field names are localized using I18n:
+- English: `config/locales/en.yml` → `audit.tables.*` and `audit.fields.*`
+- Russian: `config/locales/ru.yml` → `audit.tables.*` and `audit.fields.*`
+
+## Auditable Concern
+
+### Overview
+
+Module that can be included in any ActiveRecord model to automatically create audit logs on CREATE, UPDATE, and DELETE operations.
+
+### Usage
+
+```ruby
+class Game < ApplicationRecord
+  include Auditable
+  # ... rest of model
+end
+```
+
+### Callbacks
+
+- `after_create` — creates audit log with action CREATE
+- `after_update` — creates audit log with action UPDATE (only if attributes changed)
+- `before_destroy` — creates audit log with action DELETE (for soft delete)
+
+### Current User Tracking
+
+The concern uses `Thread.current[:current_user_id]` to track the current user. This is set by the `CurrentUserAudit` controller concern.
+
+## CurrentUserAudit Concern
+
+### Overview
+
+Controller concern that sets the current user ID in `Thread.current[:current_user_id]` for audit logging.
+
+### Usage
+
+```ruby
+class ApplicationController < ActionController::API
+  include CurrentUserAudit
+end
+```
+
+### How It Works
+
+- `before_action :set_current_user_id` — sets `Thread.current[:current_user_id]` from `current_user.id`
+- `after_action :clear_current_user_id` — clears the value after the request
+
+## AuditLogJob
+
+### Overview
+
+Background job that creates audit log entries asynchronously using Solid Queue.
+
+### Usage
+
+```ruby
+AuditLogJob.perform_later(
+  user_id: 1,
+  table_name: "games",
+  record_id: 42,
+  action: AUDIT_ACTIONS::UPDATE,
+  old_values: { "name" => "Old Name" },
+  new_values: { "name" => "New Name" }
+)
+```
 
 ## Link Entity
 

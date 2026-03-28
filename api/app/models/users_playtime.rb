@@ -1,4 +1,6 @@
 class UsersPlaytime < ApplicationRecord
+  include Auditable
+
   belongs_to :user
   belongs_to :game
 

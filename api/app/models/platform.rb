@@ -1,4 +1,6 @@
 class Platform < ApplicationRecord
+  include Auditable
+
   has_many :games, dependent: :nullify
 
   validates :name, presence: true

@@ -1,4 +1,6 @@
 class PublisherText < ApplicationRecord
+  include Auditable
+
   belongs_to :publisher
 
   validates :publisher_id, presence: true

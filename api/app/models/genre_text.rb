@@ -1,4 +1,6 @@
 class GenreText < ApplicationRecord
+  include Auditable
+
   belongs_to :genre
 
   validates :genre_id, presence: true

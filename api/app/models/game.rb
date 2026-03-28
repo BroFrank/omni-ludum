@@ -1,4 +1,6 @@
 class Game < ApplicationRecord
+  include Auditable
+
   belongs_to :platform, optional: true
   belongs_to :base_game, class_name: "Game", optional: true
   belongs_to :publisher, optional: true

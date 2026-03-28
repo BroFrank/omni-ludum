@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_28_175713) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_28_191722) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -60,6 +60,23 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_28_175713) do
     t.check_constraint "asset_type::text = ANY (ARRAY['COVER'::character varying, 'SCREENSHOT'::character varying, 'MANUAL'::character varying]::text[])", name: "check_asset_type_valid"
     t.check_constraint "file_size > 0", name: "check_file_size_positive"
     t.check_constraint "order_index IS NULL OR order_index >= 0", name: "check_order_index_non_negative"
+  end
+
+  create_table "audit_logs", force: :cascade do |t|
+    t.bigint "user_id"
+    t.string "table_name", null: false
+    t.bigint "record_id", null: false
+    t.string "action", null: false
+    t.jsonb "old_values", default: {}
+    t.jsonb "new_values", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["action"], name: "index_audit_logs_on_action"
+    t.index ["created_at"], name: "index_audit_logs_on_created_at"
+    t.index ["table_name", "record_id"], name: "index_audit_logs_on_table_and_record"
+    t.index ["table_name"], name: "index_audit_logs_on_table_name"
+    t.index ["user_id"], name: "index_audit_logs_on_user_id"
+    t.check_constraint "action::text = ANY (ARRAY['CREATE'::character varying, 'UPDATE'::character varying, 'DELETE'::character varying]::text[])", name: "check_audit_logs_action"
   end
 
   create_table "game_genres", force: :cascade do |t|
@@ -260,6 +277,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_28_175713) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "assets", "games", on_delete: :cascade
+  add_foreign_key "audit_logs", "users", on_delete: :nullify
   add_foreign_key "game_genres", "games", on_delete: :cascade
   add_foreign_key "game_genres", "genres", on_delete: :cascade
   add_foreign_key "game_rating_recalculations", "games", on_delete: :cascade

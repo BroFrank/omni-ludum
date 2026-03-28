@@ -1,4 +1,5 @@
 class Publisher < ApplicationRecord
+  include Auditable
   self.inheritance_column = nil
 
   has_many :games, dependent: :nullify

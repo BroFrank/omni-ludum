@@ -1,4 +1,6 @@
 class Genre < ApplicationRecord
+  include Auditable
+
   has_many :genre_texts, dependent: :destroy
   has_many :game_genres, dependent: :destroy
   has_many :games, through: :game_genres

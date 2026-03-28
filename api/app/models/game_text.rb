@@ -1,4 +1,6 @@
 class GameText < ApplicationRecord
+  include Auditable
+
   belongs_to :game
 
   validates :game_id, presence: true
