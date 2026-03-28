@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_28_191722) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_28_213526) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -207,6 +207,19 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_28_191722) do
     t.index ["type"], name: "index_publishers_on_type"
   end
 
+  create_table "refresh_tokens", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "token_digest", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "revoked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_refresh_tokens_on_expires_at"
+    t.index ["token_digest"], name: "index_refresh_tokens_on_token_digest"
+    t.index ["user_id", "expires_at"], name: "index_refresh_tokens_on_user_id_and_expires_at"
+    t.index ["user_id"], name: "index_refresh_tokens_on_user_id"
+  end
+
   create_table "reviews", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "game_id", null: false
@@ -288,6 +301,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_28_191722) do
   add_foreign_key "genre_texts", "genres", on_delete: :cascade
   add_foreign_key "links", "games", on_delete: :cascade
   add_foreign_key "publisher_texts", "publishers", on_delete: :cascade
+  add_foreign_key "refresh_tokens", "users", on_delete: :cascade
   add_foreign_key "reviews", "games", on_delete: :cascade
   add_foreign_key "reviews", "users", on_delete: :cascade
   add_foreign_key "users_playtime_recalculations", "games", on_delete: :cascade
