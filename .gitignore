@@ -90,3 +90,5 @@ client/*.tsbuildinfo
 
 # Keep config files
 !client/.npmrc
+*.log*
+api/log/
