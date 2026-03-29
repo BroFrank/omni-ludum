@@ -17,7 +17,7 @@ module Api
         if @user.save
           render template: "api/v1/users/create", status: :created
         else
-          render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@user)
         end
       end
 
@@ -25,7 +25,7 @@ module Api
         if @user.update(user_params)
           render template: "api/v1/users/update", status: :ok
         else
-          render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@user)
         end
       end
 
@@ -33,7 +33,7 @@ module Api
         if @user.update(is_disabled: true)
           render template: "api/v1/users/update", status: :ok
         else
-          render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@user)
         end
       end
 
@@ -41,7 +41,7 @@ module Api
         if @user.update(theme: theme_params[:theme])
           render template: "api/v1/users/update", status: :ok
         else
-          render json: { errors: @user.errors.full_messages }, status: :bad_request
+          render_validation_errors(@user, status: :bad_request)
         end
       end
 
@@ -49,7 +49,7 @@ module Api
         if @user.update(locale: locale_params[:locale])
           render template: "api/v1/users/update", status: :ok
         else
-          render json: { errors: @user.errors.full_messages }, status: :bad_request
+          render_validation_errors(@user, status: :bad_request)
         end
       end
 

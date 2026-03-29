@@ -17,7 +17,7 @@ module Api
         if @publisher.save
           render template: "api/v1/publishers/create", status: :created
         else
-          render json: { errors: @publisher.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@publisher)
         end
       end
 
@@ -25,7 +25,7 @@ module Api
         if @publisher.update(publisher_params)
           render template: "api/v1/publishers/update", status: :ok
         else
-          render json: { errors: @publisher.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@publisher)
         end
       end
 
@@ -33,7 +33,7 @@ module Api
         if @publisher.disable!
           render template: "api/v1/publishers/update", status: :ok
         else
-          render json: { errors: @publisher.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@publisher)
         end
       end
 
@@ -42,10 +42,6 @@ module Api
       def set_publisher
         @publisher = Publisher.find_by_slug(params[:slug])
         publisher_not_found unless @publisher
-      end
-
-      def publisher_not_found
-        render json: { error: "Publisher not found" }, status: :not_found
       end
 
       def publisher_params

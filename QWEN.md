@@ -228,6 +228,7 @@ npm run lint              # ESLint
 - **Background Jobs**: Solid Queue configured for async job processing (rating and playtime recalculation)
 - **Seed Data**: Default users, platforms, publishers, publisher texts, genres, and genre texts
 - **Audit Logging**: Complete audit logging system implemented with `AuditLog` model, `Auditable` concern, and `AuditLogService` for tracking all CREATE, UPDATE, DELETE operations on all models
+- **Error Handling**: Standardized error handling via `Api::V1::BaseController` with consistent response formats and centralized exception handling using `rescue_from`
 
 ## User Entity
 
@@ -1225,6 +1226,114 @@ development:
     class: CleanupOldRecalculationsJob
     queue: default
     schedule: at 3am every day
+```
+
+## Error Handling
+
+All API error responses follow a standardized format handled by `Api::V1::BaseController`.
+
+### Standard Error Response Formats
+
+| HTTP Status | Format | Description |
+|-------------|--------|-------------|
+| `422 Unprocessable Entity` | `{ errors: ["message1", "message2"] }` | Validation errors |
+| `404 Not Found` | `{ error: "Resource not found" }` | Resource not found |
+| `400 Bad Request` | `{ error: "Invalid request" }` | Bad request (e.g., invalid locale/theme) |
+| `401 Unauthorized` | `{ error: "Authentication required" }` | Authentication required |
+| `500 Internal Server Error` | `{ error: "Internal server error" }` | Unexpected server error |
+
+### BaseController Features
+
+**Centralized Exception Handling:**
+
+```ruby
+module Api
+  module V1
+    class BaseController < ApplicationController
+      # Catches ActiveRecord::RecordNotFound and returns 404
+      rescue_from ActiveRecord::RecordNotFound do |e|
+        render_not_found(e.model.class.name.demodulize.humanize)
+      end
+
+      # Catches ActionController::ParameterMissing and returns 400
+      rescue_from ActionController::ParameterMissing do |e|
+        render json: { error: "Missing required parameter: #{e.param}" }, status: :bad_request
+      end
+
+      # Catches all other exceptions and returns 500
+      rescue_from StandardError do |e|
+        Rails.logger.error(e)
+        render json: { error: "Internal server error" }, status: :internal_server_error
+      end
+    end
+  end
+end
+```
+
+**Helper Methods:**
+
+| Method | Description | Example |
+|--------|-------------|---------|
+| `render_validation_errors(model, status: :unprocessable_entity)` | Returns validation errors from model | `render_validation_errors(@user)` |
+| `render_not_found(resource_name)` | Returns 404 with custom resource name | `render_not_found("User")` |
+| `render_service_error(message, status: :unprocessable_entity)` | Returns service error with custom status | `render_service_error("Upload failed", :bad_request)` |
+
+### Resource-Specific Error Handlers
+
+Each controller inherits these helper methods from BaseController:
+
+- `user_not_found` — returns 404 for User
+- `game_not_found` — returns 404 for Game
+- `asset_not_found` — returns 404 for Asset
+- `publisher_not_found` — returns 404 for Publisher
+- `genre_not_found` — returns 404 for Genre
+
+### Service Exception Handling (AssetsController Example)
+
+```ruby
+class AssetsController < BaseController
+  rescue_from AssetUploadService::InvalidFileSizeError,
+              AssetUploadService::InvalidMimeTypeError do |e|
+    render_service_error(e.message, :bad_request)
+  end
+
+  rescue_from AssetUploadService::ValidationError do |e|
+    render json: { errors: [ e.message ] }, status: :unprocessable_entity
+  end
+
+  rescue_from AssetUploadService::UploadError do |e|
+    render_service_error(e.message, :unprocessable_entity)
+  end
+
+  rescue_from AssetUploadService::Error do |e|
+    render_service_error(e.message, :not_found)
+  end
+end
+```
+
+### Example Controller Usage
+
+```ruby
+module Api
+  module V1
+    class UsersController < BaseController
+      def create
+        @user = User.new(user_params)
+        if @user.save
+          render template: "api/v1/users/create", status: :created
+        else
+          render_validation_errors(@user)  # Returns 422 with { errors: [...] }
+        end
+      end
+
+      def show
+        @user = User.find_by_slug(params[:id])
+        user_not_found unless @user  # Returns 404 with { error: "User not found" }
+        render template: "api/v1/users/show", status: :ok
+      end
+    end
+  end
+end
 ```
 
 ## API Endpoints

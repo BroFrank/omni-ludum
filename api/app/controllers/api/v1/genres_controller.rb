@@ -17,7 +17,7 @@ module Api
         if @genre.save
           render template: "api/v1/genres/create", status: :created
         else
-          render json: { errors: @genre.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@genre)
         end
       end
 
@@ -25,7 +25,7 @@ module Api
         if @genre.update(genre_params)
           render template: "api/v1/genres/update", status: :ok
         else
-          render json: { errors: @genre.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@genre)
         end
       end
 
@@ -33,7 +33,7 @@ module Api
         if @genre.disable!
           render template: "api/v1/genres/update", status: :ok
         else
-          render json: { errors: @genre.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@genre)
         end
       end
 
@@ -42,10 +42,6 @@ module Api
       def set_genre
         @genre = Genre.find_by_slug(params[:slug])
         genre_not_found unless @genre
-      end
-
-      def genre_not_found
-        render json: { error: "Genre not found" }, status: :not_found
       end
 
       def genre_params

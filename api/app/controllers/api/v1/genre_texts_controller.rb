@@ -18,7 +18,7 @@ module Api
         if @genre_text.save
           render template: "api/v1/genre_texts/create", status: :created
         else
-          render json: { errors: @genre_text.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@genre_text)
         end
       end
 
@@ -26,7 +26,7 @@ module Api
         if @genre_text.update(genre_text_params)
           render template: "api/v1/genre_texts/update", status: :ok
         else
-          render json: { errors: @genre_text.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@genre_text)
         end
       end
 
@@ -38,8 +38,8 @@ module Api
       private
 
       def set_genre_text
-        @genre_text = GenreText.find(params[:id])
-        genre_text_not_found unless @genre_text
+        @genre_text = GenreText.find_by(id: params[:id])
+        render_not_found("Genre text") unless @genre_text
       end
 
       def set_genre
@@ -64,14 +64,6 @@ module Api
 
       def genre_text_params
         params.require(:genre_text).permit(:genre_id, :lang_code, :description)
-      end
-
-      def genre_not_found
-        render json: { error: "Genre not found" }, status: :not_found
-      end
-
-      def genre_text_not_found
-        render json: { error: "Genre text not found" }, status: :not_found
       end
     end
   end

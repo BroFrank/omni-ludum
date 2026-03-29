@@ -1,18 +1,51 @@
 module Api
   module V1
     class BaseController < ApplicationController
+      rescue_from ActiveRecord::RecordNotFound do |e|
+        render_not_found(e.model.class.name.demodulize.humanize)
+      end
+
+      rescue_from ActionController::ParameterMissing do |e|
+        render json: { error: "Missing required parameter: #{e.param}" }, status: :bad_request
+      end
+
+      rescue_from StandardError do |e|
+        Rails.logger.error(e)
+        render json: { error: "Internal server error" }, status: :internal_server_error
+      end
+
       private
 
       def user_not_found
-        render json: { error: "User not found" }, status: :not_found
+        render_not_found("User")
       end
 
       def game_not_found
-        render json: { error: "Game not found" }, status: :not_found
+        render_not_found("Game")
       end
 
       def asset_not_found
-        render json: { error: "Asset not found" }, status: :not_found
+        render_not_found("Asset")
+      end
+
+      def publisher_not_found
+        render_not_found("Publisher")
+      end
+
+      def genre_not_found
+        render_not_found("Genre")
+      end
+
+      def render_not_found(resource_name = "Resource")
+        render json: { error: "#{resource_name} not found" }, status: :not_found
+      end
+
+      def render_validation_errors(model, status: :unprocessable_entity)
+        render json: { errors: model.errors.full_messages }, status: status
+      end
+
+      def render_service_error(message, status = :unprocessable_entity)
+        render json: { error: message }, status: status
       end
 
       def current_user

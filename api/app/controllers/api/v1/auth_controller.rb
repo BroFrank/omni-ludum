@@ -5,7 +5,7 @@ module Api
         user = AuthenticationService.authenticate(login_params[:email], login_params[:password])
 
         unless user
-          return render json: { error: 'Invalid credentials' }, status: :unauthorized
+          return render_service_error('Invalid credentials', :unauthorized)
         end
 
         tokens = AuthenticationService.generate_tokens(user)
@@ -21,7 +21,7 @@ module Api
         refresh_token = cookies[:refresh_token]
 
         unless refresh_token
-          return render json: { error: 'Refresh token not found' }, status: :unauthorized
+          return render_service_error('Refresh token not found', :unauthorized)
         end
 
         tokens = RefreshTokenService.refresh_access_token(refresh_token)
@@ -32,7 +32,7 @@ module Api
           expires_at: (Time.current + JWT_ACCESS_TOKEN_EXPIRATION).iso8601
         }
       rescue StandardError => e
-        render json: { error: e.message }, status: :unauthorized
+        render_service_error(e.message, :unauthorized)
       end
 
       def logout

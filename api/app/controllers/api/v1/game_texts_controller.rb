@@ -18,7 +18,7 @@ module Api
         if @game_text.save
           render template: "api/v1/game_texts/create", status: :created
         else
-          render json: { errors: @game_text.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@game_text)
         end
       end
 
@@ -26,7 +26,7 @@ module Api
         if @game_text.update(game_text_params)
           render template: "api/v1/game_texts/update", status: :ok
         else
-          render json: { errors: @game_text.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@game_text)
         end
       end
 
@@ -38,8 +38,8 @@ module Api
       private
 
       def set_game_text
-        @game_text = GameText.find(params[:id])
-        game_text_not_found unless @game_text
+        @game_text = GameText.find_by(id: params[:id])
+        render_not_found("Game text") unless @game_text
       end
 
       def set_game
@@ -57,14 +57,6 @@ module Api
 
       def game_text_params
         params.require(:game_text).permit(:game_id, :lang_code, :description, :trivia)
-      end
-
-      def game_not_found
-        render json: { error: "Game not found" }, status: :not_found
-      end
-
-      def game_text_not_found
-        render json: { error: "Game text not found" }, status: :not_found
       end
     end
   end

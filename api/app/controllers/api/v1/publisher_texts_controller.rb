@@ -18,7 +18,7 @@ module Api
         if @publisher_text.save
           render template: "api/v1/publisher_texts/create", status: :created
         else
-          render json: { errors: @publisher_text.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@publisher_text)
         end
       end
 
@@ -26,7 +26,7 @@ module Api
         if @publisher_text.update(publisher_text_params)
           render template: "api/v1/publisher_texts/update", status: :ok
         else
-          render json: { errors: @publisher_text.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@publisher_text)
         end
       end
 
@@ -38,8 +38,8 @@ module Api
       private
 
       def set_publisher_text
-        @publisher_text = PublisherText.find(params[:id])
-        publisher_text_not_found unless @publisher_text
+        @publisher_text = PublisherText.find_by(id: params[:id])
+        render_not_found("Publisher text") unless @publisher_text
       end
 
       def set_publisher
@@ -64,14 +64,6 @@ module Api
 
       def publisher_text_params
         params.require(:publisher_text).permit(:publisher_id, :lang_code, :description)
-      end
-
-      def publisher_not_found
-        render json: { error: "Publisher not found" }, status: :not_found
-      end
-
-      def publisher_text_not_found
-        render json: { error: "Publisher text not found" }, status: :not_found
       end
     end
   end

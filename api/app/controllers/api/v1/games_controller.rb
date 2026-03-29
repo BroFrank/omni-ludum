@@ -17,7 +17,7 @@ module Api
         if @game.save
           render template: "api/v1/games/create", status: :created
         else
-          render json: { errors: @game.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@game)
         end
       end
 
@@ -25,7 +25,7 @@ module Api
         if @game.update(game_params)
           render template: "api/v1/games/update", status: :ok
         else
-          render json: { errors: @game.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@game)
         end
       end
 
@@ -33,7 +33,7 @@ module Api
         if @game.update(is_disabled: true)
           render template: "api/v1/games/update", status: :ok
         else
-          render json: { errors: @game.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@game)
         end
       end
 

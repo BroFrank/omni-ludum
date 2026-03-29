@@ -2576,6 +2576,12 @@ paths:
 
 components:
   schemas:
+    # Standard error response formats
+    # Validation errors (422): { errors: ["message1", "message2"] }
+    # Not found errors (404): { error: "Resource not found" }
+    # Bad request errors (400): { error: "Invalid request" }
+    # Internal server errors (500): { error: "Internal server error" }
+    
     User:
       type: object
       properties:
@@ -3985,6 +3991,41 @@ components:
         error:
           type: string
           example: "Invalid credentials"
+
+    # Standard error responses
+    ValidationError:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+          description: Array of validation error messages
+          example: [ "Email is invalid", "Password is too short" ]
+
+    BadRequestError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid request"
+
+    InternalServerError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Internal server error"
+
+    NotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Resource not found"
 
   securitySchemes:
     bearerAuth:

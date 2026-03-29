@@ -11,6 +11,7 @@ class AssetUploadService
   class InvalidFileSizeError < Error; end
   class InvalidMimeTypeError < Error; end
   class UploadError < Error; end
+  class ValidationError < Error; end
 
   class << self
     def upload(game_id, file, asset_type, order_index: nil)
@@ -24,7 +25,7 @@ class AssetUploadService
         content_type: file.content_type
       )
 
-      asset = Asset.create!(
+      Asset.create!(
         game: game,
         asset_type: asset_type,
         storage_path: blob.key,
@@ -32,12 +33,8 @@ class AssetUploadService
         file_size: blob.byte_size,
         order_index: order_index
       )
-
-      asset
     rescue ActiveRecord::RecordNotFound => e
       raise Error, "Game not found: #{e.message}"
-    rescue ActiveRecord::RecordInvalid => e
-      raise UploadError, e.message
     end
 
     def remove(asset_id)

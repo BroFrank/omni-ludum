@@ -29,7 +29,7 @@ module Api
         if @review.save
           render json: @review, include: [ :game, :user ], status: :created
         else
-          render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@review)
         end
       end
 
@@ -37,7 +37,7 @@ module Api
         if @review.update(review_params)
           render json: @review, include: [ :game, :user ], status: :ok
         else
-          render json: { errors: @review.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@review)
         end
       end
 
@@ -51,21 +51,21 @@ module Api
       def set_game
         if params[:game_id]
           @game = Game.find_by_name(params[:game_id])
-          render json: { error: "Game not found" }, status: :not_found unless @game
+          render_not_found("Game") unless @game
         end
       end
 
       def set_user
         if params[:user_id]
           @user = User.find_by_slug(params[:user_id])
-          render json: { error: "User not found" }, status: :not_found unless @user
+          render_not_found("User") unless @user
         end
       end
 
       def set_review
         @review = Review.find(params[:id])
       rescue ActiveRecord::RecordNotFound
-        render json: { error: "Review not found" }, status: :not_found
+        render_not_found("Review")
       end
 
       def review_params

@@ -25,7 +25,7 @@ module Api
         if @link.save
           render template: "api/v1/links/create", status: :created
         else
-          render json: { errors: @link.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@link)
         end
       end
 
@@ -33,7 +33,7 @@ module Api
         if @link.update(link_params)
           render template: "api/v1/links/update", status: :ok
         else
-          render json: { errors: @link.errors.full_messages }, status: :unprocessable_entity
+          render_validation_errors(@link)
         end
       end
 
@@ -45,9 +45,8 @@ module Api
       private
 
       def set_link
-        @link = Link.find(params[:id])
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: "Link not found" }, status: :not_found
+        @link = Link.find_by(id: params[:id])
+        render_not_found("Link") unless @link
       end
 
       def set_game
