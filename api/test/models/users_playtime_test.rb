@@ -23,7 +23,7 @@ class UsersPlaytimeTest < ActiveSupport::TestCase
       minutes_regular: 120
     )
     assert_not users_playtime.valid?
-    assert_includes users_playtime.errors[:user_id], "can't be blank"
+    assert_includes users_playtime.errors[:user], "must exist"
   end
 
   test "should require game_id" do
@@ -33,7 +33,7 @@ class UsersPlaytimeTest < ActiveSupport::TestCase
       minutes_regular: 120
     )
     assert_not users_playtime.valid?
-    assert_includes users_playtime.errors[:game_id], "can't be blank"
+    assert_includes users_playtime.errors[:game], "must exist"
   end
 
   test "minutes_regular must be greater than or equal to 0" do

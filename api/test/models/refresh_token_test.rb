@@ -24,7 +24,7 @@ class RefreshTokenTest < ActiveSupport::TestCase
       expires_at: Time.current + 30.days
     )
     assert_not refresh_token.valid?
-    assert_includes refresh_token.errors[:user_id], "can't be blank"
+    assert_includes refresh_token.errors[:user], "must exist"
   end
 
   test 'should require token_digest' do

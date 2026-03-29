@@ -1,7 +1,6 @@
 class RefreshToken < ApplicationRecord
   belongs_to :user, dependent: :destroy
 
-  validates :user_id, presence: true
   validates :token_digest, presence: true
   validates :expires_at, presence: true
 

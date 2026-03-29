@@ -26,7 +26,7 @@ class LinkTest < ActiveSupport::TestCase
       title: "Official Trailer"
     )
     assert_not link.valid?
-    assert_includes link.errors[:game_id], "can't be blank"
+    assert_includes link.errors[:game], "must exist"
   end
 
   test "should require link_type" do

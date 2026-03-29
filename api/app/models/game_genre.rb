@@ -4,8 +4,6 @@ class GameGenre < ApplicationRecord
   belongs_to :game
   belongs_to :genre
 
-  validates :game_id, presence: true
-  validates :genre_id, presence: true
   validates :genre_id, uniqueness: { scope: :game_id, conditions: -> { where(is_disabled: false) } }
 
   scope :active, -> { where(is_disabled: false) }

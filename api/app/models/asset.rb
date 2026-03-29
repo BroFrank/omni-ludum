@@ -3,7 +3,6 @@ class Asset < ApplicationRecord
 
   belongs_to :game
 
-  validates :game_id, presence: true
   validates :asset_type, presence: true, inclusion: { in: ASSET_TYPES::ALL_TYPES, message: "must be a valid asset type" }
   validates :storage_path, presence: true
   validates :mime_type, presence: true, format: { with: /\A[\w\-]+\/[\w\-\.]+\z/, message: "must be a valid MIME type" }

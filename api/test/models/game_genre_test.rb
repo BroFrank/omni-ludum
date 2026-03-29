@@ -21,13 +21,13 @@ class GameGenreTest < ActiveSupport::TestCase
   test "game_id must be present" do
     gg = GameGenre.new(@valid_attrs.merge(game: nil))
     assert_not gg.valid?
-    assert gg.errors.added?(:game_id, :blank)
+    assert gg.errors.added?(:game, :blank)
   end
 
   test "genre_id must be present" do
     gg = GameGenre.new(@valid_attrs.merge(genre: nil))
     assert_not gg.valid?
-    assert gg.errors.added?(:genre_id, :blank)
+    assert gg.errors.added?(:genre, :blank)
   end
 
   test "game_id and genre_id combination must be unique for active records" do

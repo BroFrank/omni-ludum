@@ -22,7 +22,7 @@ class AssetTest < ActiveSupport::TestCase
   test "game_id must be present" do
     asset = Asset.new(@valid_asset_attrs.merge(game: nil))
     assert_not asset.valid?
-    assert asset.errors.added?(:game_id, :blank)
+    assert asset.errors.added?(:game, :blank)
   end
 
   test "asset_type must be present" do

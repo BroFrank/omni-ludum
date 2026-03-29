@@ -3,7 +3,6 @@ class GameText < ApplicationRecord
 
   belongs_to :game
 
-  validates :game_id, presence: true
   validates :lang_code, presence: true, length: { is: 2 }, format: { with: /\A[a-z]{2}\z/ }
   validates :description, length: { maximum: 10000, allow_nil: true }
   validates :trivia, length: { maximum: 10000, allow_nil: true }

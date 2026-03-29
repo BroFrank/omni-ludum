@@ -21,7 +21,7 @@ class PublisherTextTest < ActiveSupport::TestCase
   test "publisher_id must be present" do
     pt = PublisherText.new(@valid_attrs.merge(publisher: nil))
     assert_not pt.valid?
-    assert pt.errors.added?(:publisher_id, :blank)
+    assert pt.errors.added?(:publisher, :blank)
   end
 
   test "lang_code must be present" do

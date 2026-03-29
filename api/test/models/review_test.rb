@@ -25,7 +25,7 @@ class ReviewTest < ActiveSupport::TestCase
       difficulty: 5
     )
     assert_not review.valid?
-    assert_includes review.errors[:user_id], "can't be blank"
+    assert_includes review.errors[:user], "must exist"
   end
 
   test "should require game_id" do
@@ -36,7 +36,7 @@ class ReviewTest < ActiveSupport::TestCase
       difficulty: 5
     )
     assert_not review.valid?
-    assert_includes review.errors[:game_id], "can't be blank"
+    assert_includes review.errors[:game], "must exist"
   end
 
   test "should require rating" do

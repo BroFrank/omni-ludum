@@ -3,7 +3,6 @@ class PublisherText < ApplicationRecord
 
   belongs_to :publisher
 
-  validates :publisher_id, presence: true
   validates :lang_code, presence: true, length: { is: 2 }, format: { with: /\A[a-z]{2}\z/ }
   validates :description, length: { maximum: 10000, allow_nil: true }
   validates :lang_code, uniqueness: { scope: :publisher_id, case_sensitive: false }

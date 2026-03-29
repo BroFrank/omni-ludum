@@ -22,7 +22,7 @@ class GameTextTest < ActiveSupport::TestCase
   test "game_id must be present" do
     gt = GameText.new(@valid_attrs.merge(game: nil))
     assert_not gt.valid?
-    assert gt.errors.added?(:game_id, :blank)
+    assert gt.errors.added?(:game, :blank)
   end
 
   test "lang_code must be present" do

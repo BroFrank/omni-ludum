@@ -3,7 +3,6 @@ class Link < ApplicationRecord
 
   belongs_to :game
 
-  validates :game_id, presence: true
   validates :link_type, presence: true, inclusion: { in: LINK_TYPES::ALL_TYPES, message: "must be a valid link type" }
   validates :url, presence: true, format: { with: URI::DEFAULT_PARSER.make_regexp, message: "must be a valid URL" }
   validates :title, presence: true, length: { minimum: 1, maximum: 255 }

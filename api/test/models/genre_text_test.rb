@@ -21,7 +21,7 @@ class GenreTextTest < ActiveSupport::TestCase
   test "genre_id must be present" do
     gt = GenreText.new(@valid_attrs.merge(genre: nil))
     assert_not gt.valid?
-    assert gt.errors.added?(:genre_id, :blank)
+    assert gt.errors.added?(:genre, :blank)
   end
 
   test "lang_code must be present" do

@@ -1,7 +1,6 @@
 class UsersPlaytimeRecalculation < ApplicationRecord
   belongs_to :game
 
-  validates :game_id, presence: true
   validates :status, presence: true, inclusion: { in: %w[pending processing completed failed] }
 
   scope :pending, -> { where(status: "pending") }
