@@ -4,7 +4,7 @@ module Api
       before_action :set_game, only: %i[show update disable]
 
       def index
-        @games = Game.active.page(params[:page]).per(params[:per_page] || 20)
+        @games = Game.active.page(params[:page]).per(params[:per_page] || DEFAULT_PER_PAGE)
         render template: "api/v1/games/index", status: :ok
       end
 

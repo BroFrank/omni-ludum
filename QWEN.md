@@ -197,6 +197,7 @@ npm run lint              # ESLint
 - `api/config/routes.rb` - API routes
 - `api/.rubocop.yml` - Ruby linting rules
 - `api/.ruby-version` - Ruby version (3.4.8)
+- `api/config/initializers/consts.rb` - Application constants (USER_ROLES, USER_THEMES, USER_LOCALES, LINK_TYPES, ASSET_TYPES, PUBLISHER_TYPES, AUDIT_ACTIONS, DEFAULT_PER_PAGE, DEFAULT_BATCH_SIZE, DEFAULT_CLEANUP_DAYS_OLD)
 
 ### Frontend
 - `client/package.json` - Node dependencies and scripts
@@ -229,6 +230,7 @@ npm run lint              # ESLint
 - **Seed Data**: Default users, platforms, publishers, publisher texts, genres, and genre texts
 - **Audit Logging**: Complete audit logging system implemented with `AuditLog` model, `Auditable` concern, and `AuditLogService` for tracking all CREATE, UPDATE, DELETE operations on all models
 - **Error Handling**: Standardized error handling via `Api::V1::BaseController` with consistent response formats and centralized exception handling using `rescue_from`
+- **Constants**: Global application constants defined in `api/config/initializers/consts.rb` (USER_ROLES, USER_THEMES, DEFAULT_PER_PAGE, DEFAULT_BATCH_SIZE, DEFAULT_CLEANUP_DAYS_OLD, etc.)
 
 ## User Entity
 

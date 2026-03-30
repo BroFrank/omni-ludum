@@ -44,7 +44,7 @@ class UsersPlaytimeRecalculationService
   end
 
   def self.process_pending
-    recalculations = UsersPlaytimeRecalculation.for_processing.limit(100)
+    recalculations = UsersPlaytimeRecalculation.for_processing.limit(DEFAULT_BATCH_SIZE)
 
     recalculations.each do |recalculation|
       process_recalculation(recalculation)
@@ -99,7 +99,7 @@ class UsersPlaytimeRecalculationService
     Rails.logger.error e.backtrace.join("\n")
   end
 
-  def self.cleanup_old(days_old: 7)
+  def self.cleanup_old(days_old: DEFAULT_CLEANUP_DAYS_OLD)
     cutoff_date = days_old.days.ago
 
     deleted_count = UsersPlaytimeRecalculation

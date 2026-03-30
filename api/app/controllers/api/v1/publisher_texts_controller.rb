@@ -5,7 +5,7 @@ module Api
       before_action :set_publisher, only: %i[index create]
 
       def index
-        @publisher_texts = @publisher_texts.active.page(params[:page]).per(params[:per_page] || 20)
+        @publisher_texts = @publisher_texts.active.page(params[:page]).per(params[:per_page] || DEFAULT_PER_PAGE)
         render template: "api/v1/publisher_texts/index", status: :ok
       end
 

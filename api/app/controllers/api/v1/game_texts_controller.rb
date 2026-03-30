@@ -5,7 +5,7 @@ module Api
       before_action :set_game, only: %i[index create]
 
       def index
-        @game_texts = @game_texts.active.page(params[:page]).per(params[:per_page] || 20)
+        @game_texts = @game_texts.active.page(params[:page]).per(params[:per_page] || DEFAULT_PER_PAGE)
         render template: "api/v1/game_texts/index", status: :ok
       end
 

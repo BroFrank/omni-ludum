@@ -1,6 +1,8 @@
 module Api
   module V1
     class BaseController < ApplicationController
+      DEFAULT_PER_PAGE = 20
+
       rescue_from ActiveRecord::RecordNotFound do |e|
         render_not_found(e.model.class.name.demodulize.humanize)
       end

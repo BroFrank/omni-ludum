@@ -14,7 +14,7 @@ module Api
                              UsersPlaytime.active.includes(:game, :user).order(created_at: :desc)
         end
 
-        @users_playtimes = @users_playtimes.page(params[:page]).per(params[:per_page] || 20)
+        @users_playtimes = @users_playtimes.page(params[:page]).per(params[:per_page] || DEFAULT_PER_PAGE)
 
         render json: @users_playtimes, include: [ :game, :user ], status: :ok
       end

@@ -4,7 +4,7 @@ module Api
       before_action :set_publisher, only: %i[show update disable]
 
       def index
-        @publishers = Publisher.active.page(params[:page]).per(params[:per_page] || 20)
+        @publishers = Publisher.active.page(params[:page]).per(params[:per_page] || DEFAULT_PER_PAGE)
         render template: "api/v1/publishers/index", status: :ok
       end
 

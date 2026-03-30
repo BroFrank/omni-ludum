@@ -4,7 +4,7 @@ module Api
       before_action :set_user, only: [ :show, :update, :disable, :update_theme, :update_locale ]
 
       def index
-        @users = User.active.page(params[:page]).per(params[:per_page] || 20)
+        @users = User.active.page(params[:page]).per(params[:per_page] || DEFAULT_PER_PAGE)
         render template: "api/v1/users/index", status: :ok
       end
 

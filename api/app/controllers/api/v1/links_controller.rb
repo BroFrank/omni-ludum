@@ -6,9 +6,9 @@ module Api
 
       def index
         if @game
-          @links = Link.active.where(game: @game).page(params[:page]).per(params[:per_page] || 20)
+          @links = Link.active.where(game: @game).page(params[:page]).per(params[:per_page] || DEFAULT_PER_PAGE)
         else
-          @links = Link.active.page(params[:page]).per(params[:per_page] || 20)
+          @links = Link.active.page(params[:page]).per(params[:per_page] || DEFAULT_PER_PAGE)
         end
         render template: "api/v1/links/index", status: :ok
       end

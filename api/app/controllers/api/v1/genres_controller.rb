@@ -4,7 +4,7 @@ module Api
       before_action :set_genre, only: %i[show update disable]
 
       def index
-        @genres = Genre.active.page(params[:page]).per(params[:per_page] || 20)
+        @genres = Genre.active.page(params[:page]).per(params[:per_page] || DEFAULT_PER_PAGE)
         render template: "api/v1/genres/index", status: :ok
       end
 

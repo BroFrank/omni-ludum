@@ -14,7 +14,7 @@ module Api
                      Review.active.includes(:game, :user).order(created_at: :desc)
         end
 
-        @reviews = @reviews.page(params[:page]).per(params[:per_page] || 20)
+        @reviews = @reviews.page(params[:page]).per(params[:per_page] || DEFAULT_PER_PAGE)
 
         render json: @reviews, include: [ :game, :user ], status: :ok
       end

@@ -24,7 +24,7 @@ module Api
       def index
         @assets = @game.assets.active.ordered
         @assets = @assets.by_type(params[:asset_type]) if params[:asset_type].present?
-        @assets = @assets.page(params[:page]).per(params[:per_page] || 20)
+        @assets = @assets.page(params[:page]).per(params[:per_page] || DEFAULT_PER_PAGE)
         render template: "api/v1/assets/index", status: :ok
       end
 
