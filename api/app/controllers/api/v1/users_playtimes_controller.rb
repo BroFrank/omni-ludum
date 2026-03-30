@@ -42,8 +42,10 @@ module Api
       end
 
       def destroy
-        @users_playtime.update!(is_disabled: true)
+        UsersPlaytimeDeleteService.call(@users_playtime, current_user: current_user)
         render json: { message: "Users playtime successfully deleted" }, status: :ok
+      rescue UsersPlaytimeDeleteService::UsersPlaytimeDeleteError => e
+        render json: { errors: [ e.message ] }, status: :unprocessable_entity
       end
 
       private

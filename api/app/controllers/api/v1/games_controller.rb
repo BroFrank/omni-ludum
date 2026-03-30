@@ -30,11 +30,10 @@ module Api
       end
 
       def disable
-        if @game.update(is_disabled: true)
-          render template: "api/v1/games/update", status: :ok
-        else
-          render_validation_errors(@game)
-        end
+        GameDisableService.call(@game, current_user: current_user)
+        render template: "api/v1/games/update", status: :ok
+      rescue GameDisableService::GameDisableError => e
+        render_validation_errors(@game)
       end
 
       private

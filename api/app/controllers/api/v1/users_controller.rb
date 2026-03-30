@@ -30,11 +30,10 @@ module Api
       end
 
       def disable
-        if @user.update(is_disabled: true)
-          render template: "api/v1/users/update", status: :ok
-        else
-          render_validation_errors(@user)
-        end
+        UserDisableService.call(@user, current_user: current_user)
+        render template: "api/v1/users/update", status: :ok
+      rescue UserDisableService::UserDisableError => e
+        render json: { errors: [ e.message ] }, status: :unprocessable_entity
       end
 
       def update_theme

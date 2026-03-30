@@ -30,11 +30,10 @@ module Api
       end
 
       def disable
-        if @genre.disable!
-          render template: "api/v1/genres/update", status: :ok
-        else
-          render_validation_errors(@genre)
-        end
+        GenreDisableService.call(@genre, current_user: current_user)
+        render template: "api/v1/genres/update", status: :ok
+      rescue GenreDisableService::GenreDisableError => e
+        render_validation_errors(@genre)
       end
 
       private

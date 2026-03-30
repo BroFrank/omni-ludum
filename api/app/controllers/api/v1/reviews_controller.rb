@@ -42,8 +42,10 @@ module Api
       end
 
       def destroy
-        @review.update!(is_disabled: true)
+        ReviewDeleteService.call(@review, current_user: current_user)
         render json: { message: "Review successfully deleted" }, status: :ok
+      rescue ReviewDeleteService::ReviewDeleteError => e
+        render json: { errors: [ e.message ] }, status: :unprocessable_entity
       end
 
       private

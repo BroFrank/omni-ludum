@@ -30,11 +30,10 @@ module Api
       end
 
       def disable
-        if @publisher.disable!
-          render template: "api/v1/publishers/update", status: :ok
-        else
-          render_validation_errors(@publisher)
-        end
+        PublisherDisableService.call(@publisher, current_user: current_user)
+        render template: "api/v1/publishers/update", status: :ok
+      rescue PublisherDisableService::PublisherDisableError => e
+        render_validation_errors(@publisher)
       end
 
       private

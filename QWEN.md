@@ -231,6 +231,7 @@ npm run lint              # ESLint
 - **Audit Logging**: Complete audit logging system implemented with `AuditLog` model, `Auditable` concern, and `AuditLogService` for tracking all CREATE, UPDATE, DELETE operations on all models
 - **Error Handling**: Standardized error handling via `Api::V1::BaseController` with consistent response formats and centralized exception handling using `rescue_from`
 - **Constants**: Global application constants defined in `api/config/initializers/consts.rb` (USER_ROLES, USER_THEMES, DEFAULT_PER_PAGE, DEFAULT_BATCH_SIZE, DEFAULT_CLEANUP_DAYS_OLD, etc.)
+- **Service Objects**: Business logic extracted into service classes for soft delete operations (UserDisableService, GameDisableService, PublisherDisableService, GenreDisableService, ReviewDeleteService, UsersPlaytimeDeleteService, LinkDeleteService)
 
 ## User Entity
 
@@ -1116,6 +1117,62 @@ ASSET_TYPES = {
 | `page` | 1 | Page number for pagination |
 | `per_page` | 20 | Items per page |
 | `asset_type` | — | Filter by type (COVER, SCREENSHOT, MANUAL) |
+
+## Service Objects
+
+### Overview
+
+Business logic for soft delete and restore operations is encapsulated in service objects. All services use transactions for atomicity and create audit logs automatically.
+
+### Disable/Delete Services
+
+**UserDisableService**: Handles user soft delete and restore:
+- `UserDisableService.call(user, current_user: nil)` — soft deletes user and associated records (reviews, playtimes)
+- `UserDisableService.restore(user, current_user: nil)` — restores a soft-deleted user
+- Creates audit logs for all operations
+- Raises `UserDisableService::UserDisableError` on errors
+
+**GameDisableService**: Handles game soft delete and restore:
+- `GameDisableService.call(game, current_user: nil)` — soft deletes game, nullifies DLCs, reviews, and playtimes
+- `GameDisableService.restore(game, current_user: nil)` — restores a soft-deleted game
+- Creates audit logs for all operations
+- Raises `GameDisableService::GameDisableError` on errors
+
+**PublisherDisableService**: Handles publisher soft delete and restore:
+- `PublisherDisableService.call(publisher, current_user: nil)` — soft deletes publisher and nullifies associated games
+- `PublisherDisableService.restore(publisher, current_user: nil)` — restores a soft-deleted publisher
+- Creates audit logs for all operations
+- Raises `PublisherDisableService::PublisherDisableError` on errors
+
+**GenreDisableService**: Handles genre soft delete and restore:
+- `GenreDisableService.call(genre, current_user: nil)` — soft deletes genre and associated game_genres
+- `GenreDisableService.restore(genre, current_user: nil)` — restores a soft-deleted genre
+- Creates audit logs for all operations
+- Raises `GenreDisableService::GenreDisableError` on errors
+
+**ReviewDeleteService**: Handles review soft delete:
+- `ReviewDeleteService.call(review, current_user: nil)` — soft deletes review and enqueues rating recalculation
+- Creates audit logs for all operations
+- Raises `ReviewDeleteService::ReviewDeleteError` on errors
+
+**UsersPlaytimeDeleteService**: Handles playtime record soft delete:
+- `UsersPlaytimeDeleteService.call(users_playtime, current_user: nil)` — soft deletes playtime and enqueues recalculation
+- Creates audit logs for all operations
+- Raises `UsersPlaytimeDeleteService::UsersPlaytimeDeleteError` on errors
+
+**LinkDeleteService**: Handles link soft delete and restore:
+- `LinkDeleteService.call(link, current_user: nil)` — soft deletes link
+- `LinkDeleteService.restore(link, current_user: nil)` — restores a soft-deleted link
+- Creates audit logs for all operations
+- Raises `LinkDeleteService::LinkDeleteError` on errors
+
+### Base Service Class
+
+**ApplicationService**: Base module for service objects:
+- `ApplicationService::BaseError` — base error class for all services
+- `ApplicationService::ValidationError` — validation error with errors array
+- `ApplicationService::NotFoundError` — resource not found error
+- `ApplicationService::UnauthorizedError` — authorization error
 
 ## Background Jobs: Playtime Recalculation
 

@@ -38,8 +38,10 @@ module Api
       end
 
       def destroy
-        @link.disable!
+        LinkDeleteService.call(@link, current_user: current_user)
         head :no_content
+      rescue LinkDeleteService::LinkDeleteError => e
+        render json: { errors: [ e.message ] }, status: :unprocessable_entity
       end
 
       private
