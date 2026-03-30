@@ -65,16 +65,19 @@ class GameRatingRecalculationService
 
   def self.process_pending
     recalculations = GameRatingRecalculation.for_processing.limit(DEFAULT_BATCH_SIZE)
+    
+    game_ids = recalculations.pluck(:game_id)
+    games = Game.where(id: game_ids).index_by(&:id)
 
     recalculations.each do |recalculation|
-      process_recalculation(recalculation)
+      process_recalculation(recalculation, games[recalculation.game_id])
     end
   end
 
-  def self.process_recalculation(recalculation)
+  def self.process_recalculation(recalculation, game = nil)
     recalculation.update!(status: GameRatingRecalculation::STATUS_PROCESSING)
-
-    game = Game.find_by(id: recalculation.game_id)
+    
+    game ||= Game.find_by(id: recalculation.game_id)
 
     if game.nil?
       recalculation.update!(

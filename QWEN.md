@@ -234,6 +234,7 @@ npm run lint              # ESLint
 - **Service Objects**: Business logic extracted into service classes for soft delete operations (UserDisableService, GameDisableService, PublisherDisableService, GenreDisableService, ReviewDeleteService, UsersPlaytimeDeleteService, LinkDeleteService)
 - **Race Condition Fixes**: `GameRatingRecalculationService` and `UsersPlaytimeRecalculationService` use `find_or_create_by!` with unique partial indexes to prevent duplicate pending recalculations under high concurrency
 - **JWT Security**: Access token blacklist implemented using PostgreSQL with automatic cleanup. Token versioning for bulk invalidation on security events (password change, account disable). Immediate token revocation on logout.
+- **N+1 Query Optimization**: All controllers use eager loading (`.includes()`) to prevent N+1 query problems when rendering JSON responses with associations (platform, publisher, genres, game_texts, etc.). Background job services (GameRatingRecalculationService, UsersPlaytimeRecalculationService) use bulk loading (`Game.where(id: game_ids).index_by(&:id)`) to avoid N+1 when processing pending recalculations
 
 ## User Entity
 
