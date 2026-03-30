@@ -2,16 +2,11 @@ class GameRatingRecalculationService
   def self.enqueue(game_id)
     game_id = game_id.to_i
 
-    ActiveRecord::Base.transaction do
-      recalculation = GameRatingRecalculation.find_by(game_id: game_id, status: GameRatingRecalculation::STATUS_PENDING)
-
-      if recalculation.nil?
-        GameRatingRecalculation.create!(
-          game_id: game_id,
-          status: GameRatingRecalculation::STATUS_PENDING,
-          scheduled_at: Time.current
-        )
-      end
+    GameRatingRecalculation.find_or_create_by!(
+      game_id: game_id,
+      status: GameRatingRecalculation::STATUS_PENDING
+    ) do |recalculation|
+      recalculation.scheduled_at = Time.current
     end
 
     true
@@ -22,19 +17,12 @@ class GameRatingRecalculationService
   def self.enqueue_bulk(game_ids)
     game_ids = game_ids.map(&:to_i).uniq
 
-    ActiveRecord::Base.transaction do
-      existing_pending = GameRatingRecalculation
-        .where(game_id: game_ids, status: GameRatingRecalculation::STATUS_PENDING)
-        .pluck(:game_id)
-
-      game_ids_to_enqueue = game_ids - existing_pending
-
-      game_ids_to_enqueue.each do |game_id|
-        GameRatingRecalculation.create!(
-          game_id: game_id,
-          status: GameRatingRecalculation::STATUS_PENDING,
-          scheduled_at: Time.current
-        )
+    game_ids.each do |game_id|
+      GameRatingRecalculation.find_or_create_by!(
+        game_id: game_id,
+        status: GameRatingRecalculation::STATUS_PENDING
+      ) do |recalculation|
+        recalculation.scheduled_at = Time.current
       end
     end
 

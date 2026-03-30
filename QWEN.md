@@ -226,12 +226,13 @@ npm run lint              # ESLint
 - **Backend**: Full CRUD API for User, Game, Platform, Publisher, PublisherText, Genre, GenreText, GameGenre, Review, UsersPlaytime, Link, and Asset models
 - **Frontend**: Basic SvelteKit structure with Tailwind CSS
 - **Documentation**: Swagger UI available at `/api-docs`
-- **Background Jobs**: Solid Queue configured for async job processing (rating and playtime recalculation)
+- **Background Jobs**: Solid Queue configured for async job processing (rating and playtime recalculation) with race condition protection
 - **Seed Data**: Default users, platforms, publishers, publisher texts, genres, and genre texts
 - **Audit Logging**: Complete audit logging system implemented with `AuditLog` model, `Auditable` concern, and `AuditLogService` for tracking all CREATE, UPDATE, DELETE operations on all models
 - **Error Handling**: Standardized error handling via `Api::V1::BaseController` with consistent response formats and centralized exception handling using `rescue_from`
 - **Constants**: Global application constants defined in `api/config/initializers/consts.rb` (USER_ROLES, USER_THEMES, DEFAULT_PER_PAGE, DEFAULT_BATCH_SIZE, DEFAULT_CLEANUP_DAYS_OLD, etc.)
 - **Service Objects**: Business logic extracted into service classes for soft delete operations (UserDisableService, GameDisableService, PublisherDisableService, GenreDisableService, ReviewDeleteService, UsersPlaytimeDeleteService, LinkDeleteService)
+- **Race Condition Fixes**: `GameRatingRecalculationService` and `UsersPlaytimeRecalculationService` use `find_or_create_by!` with unique partial indexes to prevent duplicate pending recalculations under high concurrency
 
 ## User Entity
 
@@ -1183,11 +1184,13 @@ Game playtime statistics (`playtime_avg` and `playtime_100_avg`) are recalculate
 ### Components
 
 **UsersPlaytimeRecalculationService**: Service class that handles:
-- `enqueue(game_id)` — adds a game to the recalculation queue (prevents duplicates)
-- `enqueue_bulk(game_ids)` — adds multiple games to the queue
+- `enqueue(game_id)` — adds a game to the recalculation queue (prevents duplicates via `find_or_create_by!`)
+- `enqueue_bulk(game_ids)` — adds multiple games to the queue (race condition safe)
 - `process_pending` — processes all pending recalculations (up to 100 at a time)
 - `process_recalculation(recalculation)` — processes a single recalculation task
 - `cleanup_old(days_old: 7)` — removes old completed recalculation records
+
+**Race Condition Protection**: The `enqueue` method uses `find_or_create_by!` with a unique partial index on `[game_id, status]` where `status = 'pending'` to prevent duplicate pending recalculations under high concurrency.
 
 **UsersPlaytimeRecalculationJob**: Job that processes a single recalculation task by calling `UsersPlaytimeRecalculationService.process_recalculation`.
 
@@ -1250,10 +1253,13 @@ Game ratings (`rating_avg` and `difficulty_avg`) are recalculated asynchronously
 **Solid Queue**: Official Rails background job processor using PostgreSQL as backend.
 
 **GameRatingRecalculationService**: Service class that handles:
-- `enqueue(game_id)` — adds a game to the recalculation queue (prevents duplicates)
-- `enqueue_bulk(game_ids)` — adds multiple games to the queue
+- `enqueue(game_id)` — adds a game to the recalculation queue (prevents duplicates via `find_or_create_by!`)
+- `enqueue_bulk(game_ids)` — adds multiple games to the queue (race condition safe)
 - `process_pending` — processes all pending recalculations
+- `process_recalculation(recalculation)` — processes a single recalculation task
 - `cleanup_old(days_old: 7)` — removes old completed recalculation records
+
+**Race Condition Protection**: The `enqueue` method uses `find_or_create_by!` with a unique partial index on `[game_id, status]` where `status = 'pending'` to prevent duplicate pending recalculations under high concurrency.
 
 **GameRatingRecalculationJob**: Job that performs the actual recalculation for a single game.
 
