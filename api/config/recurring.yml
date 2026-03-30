@@ -35,5 +35,10 @@ development:
     queue: default
     schedule: at 3am every day
 
+  cleanup_expired_blacklist:
+    class: CleanupExpiredBlacklistJob
+    queue: default
+    schedule: at 3am every day
+
 test:
   <<: *default

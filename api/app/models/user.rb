@@ -70,6 +70,11 @@ class User < ApplicationRecord
     active.find_by(slug: slug)
   end
 
+  def invalidate_all_tokens!
+    increment!(:token_version)
+    RefreshToken.where(user: self).update_all(revoked_at: Time.current)
+  end
+
   private
 
   def generate_slug

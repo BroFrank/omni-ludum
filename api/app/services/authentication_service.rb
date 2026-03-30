@@ -20,7 +20,7 @@ class AuthenticationService
       role: user.role,
       iat: Time.current.to_i
     }
-    JwtService.encode(payload)
+    JwtService.encode(payload, token_version: user.token_version)
   end
 
   def self.generate_refresh_token(user)
@@ -46,7 +46,7 @@ class AuthenticationService
   end
 
   def self.revoke_all_user_tokens(user)
-    RefreshToken.where(user: user).active.update_all(revoked_at: Time.current)
+    user.invalidate_all_tokens!
   end
 
   def self.cleanup_expired_tokens

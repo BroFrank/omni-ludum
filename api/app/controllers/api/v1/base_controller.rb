@@ -56,7 +56,13 @@ module Api
           return nil unless token
 
           payload = JwtService.decode(token)
-          User.find_by(id: payload[:sub])
+          user = User.find_by(id: payload[:sub])
+
+          if user && payload[:token_version] && payload[:token_version] != user.token_version
+            raise 'Token version mismatch - tokens have been invalidated'
+          end
+
+          user
         rescue StandardError
           nil
         end

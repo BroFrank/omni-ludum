@@ -10,9 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_03_28_213526) do
+ActiveRecord::Schema[7.2].define(version: 2026_03_30_193907) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "access_token_blacklists", force: :cascade do |t|
+    t.string "jti", null: false
+    t.datetime "expires_at", null: false
+    t.string "reason"
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_access_token_blacklists_on_expires_at"
+    t.index ["jti"], name: "index_access_token_blacklists_on_jti", unique: true
+    t.index ["user_id"], name: "index_access_token_blacklists_on_user_id"
+  end
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -85,7 +97,7 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_28_213526) do
     t.boolean "is_disabled", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["game_id", "genre_id"], name: "index_game_genres_on_game_id_and_genre_id", unique: true
+    t.index ["game_id", "genre_id"], name: "index_game_genres_on_game_id_and_genre_id_unique", unique: true, where: "(is_disabled = false)"
     t.index ["game_id"], name: "index_game_genres_on_game_id"
     t.index ["genre_id"], name: "index_game_genres_on_genre_id"
   end
@@ -157,6 +169,15 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_28_213526) do
     t.index ["is_disabled"], name: "index_genres_on_is_disabled"
     t.index ["name"], name: "index_genres_on_name", unique: true
     t.index ["slug"], name: "index_genres_on_slug", unique: true
+  end
+
+  create_table "jwt_blacklists", force: :cascade do |t|
+    t.string "jti", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expires_at"], name: "index_jwt_blacklists_on_expires_at"
+    t.index ["jti"], name: "index_jwt_blacklists_on_jti", unique: true
   end
 
   create_table "links", force: :cascade do |t|
@@ -249,10 +270,12 @@ ActiveRecord::Schema[7.2].define(version: 2026_03_28_213526) do
     t.datetime "updated_at", null: false
     t.string "theme", default: "light", null: false
     t.string "locale", default: "en", null: false
+    t.integer "token_version", default: 0, null: false
     t.index "lower((username)::text)", name: "index_users_on_username_ci", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["is_disabled"], name: "index_users_on_is_disabled"
     t.index ["slug"], name: "index_users_on_slug", unique: true
+    t.index ["token_version"], name: "index_users_on_token_version"
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 

@@ -233,6 +233,7 @@ npm run lint              # ESLint
 - **Constants**: Global application constants defined in `api/config/initializers/consts.rb` (USER_ROLES, USER_THEMES, DEFAULT_PER_PAGE, DEFAULT_BATCH_SIZE, DEFAULT_CLEANUP_DAYS_OLD, etc.)
 - **Service Objects**: Business logic extracted into service classes for soft delete operations (UserDisableService, GameDisableService, PublisherDisableService, GenreDisableService, ReviewDeleteService, UsersPlaytimeDeleteService, LinkDeleteService)
 - **Race Condition Fixes**: `GameRatingRecalculationService` and `UsersPlaytimeRecalculationService` use `find_or_create_by!` with unique partial indexes to prevent duplicate pending recalculations under high concurrency
+- **JWT Security**: Access token blacklist implemented using PostgreSQL with automatic cleanup. Token versioning for bulk invalidation on security events (password change, account disable). Immediate token revocation on logout.
 
 ## User Entity
 
@@ -1657,3 +1658,70 @@ Error examples must be relevant to the resource's validation rules:
 - Soft delete pattern: records are never physically deleted, only marked as `is_disabled: true`
 - Games use self-referencing foreign key for DLC/mod relationships
 - Games are looked up by `name` (not slug) for simplicity
+
+## JWT Security
+
+### Token Structure
+
+Access tokens are JWTs with the following payload:
+
+```json
+{
+  "sub": 1,
+  "email": "user@example.com",
+  "role": "REGULAR",
+  "jti": "uuid-string",
+  "iat": 1234567890,
+  "exp": 1234568790,
+  "token_version": 0
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `sub` | User ID |
+| `email` | User email |
+| `role` | User role |
+| `jti` | Unique token identifier (for blacklist) |
+| `iat` | Issued at timestamp |
+| `exp` | Expiration timestamp (15 minutes) |
+| `token_version` | User's token version (for bulk invalidation) |
+
+### Token Blacklist
+
+Access tokens can be revoked before expiration using PostgreSQL-backed blacklist:
+
+**Model:** `AccessTokenBlacklist`
+- `jti` — unique token identifier
+- `expires_at` — token expiration time
+- `reason` — revocation reason (logout, password_change, account_disable, compromised)
+- `user_id` — optional user reference
+
+**Cleanup:** Expired blacklist entries are automatically removed daily at 3 AM by `CleanupExpiredBlacklistJob`.
+
+### Token Versioning
+
+Each user has a `token_version` field (integer, default: 0). When security-sensitive events occur:
+- Password change
+- Account disable
+- Logout from all devices
+
+The `token_version` is incremented, invalidating all previously issued access tokens for that user.
+
+### Revocation Scenarios
+
+| Scenario | Access Token | Refresh Token | Mechanism |
+|----------|--------------|---------------|-----------|
+| Logout | ✅ Blacklisted | ✅ Revoked | JTI added to blacklist |
+| Logout All | ✅ Invalidated | ✅ Revoked | `token_version` incremented |
+| Password Change | ✅ Invalidated | ✅ Revoked | `token_version` incremented |
+| Account Disabled | ✅ Invalidated | ✅ Revoked | `token_version` incremented |
+| Token Compromised | ✅ Blacklisted | ✅ Revoked | JTI added to blacklist + `token_version` incremented |
+
+### Security Best Practices
+
+1. **Short-lived access tokens:** 15 minutes expiration
+2. **Refresh token rotation:** New refresh token issued on each refresh
+3. **Immediate revocation:** Logout adds access token to blacklist
+4. **Bulk invalidation:** Token versioning for security events
+5. **Automatic cleanup:** Expired blacklist entries removed daily

@@ -39,6 +39,14 @@ module Api
         refresh_token = cookies[:refresh_token]
 
         if refresh_token
+          token_digest = Digest::SHA256.hexdigest(refresh_token)
+          refresh_token_record = RefreshToken.find_by(token_digest: token_digest)
+          
+          if refresh_token_record
+            user = refresh_token_record.user
+            add_access_token_to_blacklist(user)
+          end
+          
           AuthenticationService.revoke_refresh_token(refresh_token)
         end
 
@@ -50,12 +58,29 @@ module Api
       def logout_all
         return unless require_authentication!
 
-        AuthenticationService.revoke_all_user_tokens(current_user)
+        current_user.invalidate_all_tokens!
 
         head :no_content
       end
 
       private
+
+      def add_access_token_to_blacklist(user)
+        token = request.headers['Authorization']&.split(' ')&.last
+        return unless token
+
+        decoded = JWT.decode(token, JWT_SECRET_KEY, false)
+        payload = decoded.first.with_indifferent_access
+
+        AccessTokenBlacklist.add(
+          payload[:jti],
+          Time.at(payload['exp']),
+          reason: 'logout',
+          user_id: user.id
+        )
+      rescue StandardError
+        Rails.logger.warn('Failed to add access token to blacklist')
+      end
 
       def login_params
         params.permit(:email, :password)

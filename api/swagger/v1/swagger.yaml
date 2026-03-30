@@ -57,17 +57,25 @@ paths:
   /api/v1/auth/logout:
     delete:
       summary: User logout
-      description: Revoke current refresh token and clear cookie
+      description: Revoke current refresh token, add access token to blacklist, and clear cookie. The access token will be invalidated immediately.
       tags:
         - Authentication
+      security:
+        - bearerAuth: []
       responses:
         '204':
           description: Logout successful
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthError'
 
   /api/v1/auth/logout_all:
     delete:
       summary: Logout from all devices
-      description: Revoke all refresh tokens for the current user (requires authentication)
+      description: Revoke all refresh tokens and invalidate all access tokens for the current user by incrementing token version. Requires authentication.
       tags:
         - Authentication
       security:
@@ -3991,6 +3999,22 @@ components:
         error:
           type: string
           example: "Invalid credentials"
+
+    TokenRevokedError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Token has been revoked"
+      description: Returned when access token has been blacklisted (e.g., after logout)
+
+    TokenVersionMismatchError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Token version mismatch - tokens have been invalidated"
+      description: Returned when token version doesn't match user's current token version (e.g., after password change)
 
     # Standard error responses
     ValidationError:
