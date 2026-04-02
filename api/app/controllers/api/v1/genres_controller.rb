@@ -4,10 +4,11 @@ module Api
       before_action :set_genre, only: %i[show update disable]
 
       def index
-        @genres = Genre.active
-          .includes(:genre_texts)
-          .page(params[:page])
-          .per(params[:per_page] || DEFAULT_PER_PAGE)
+        @all_genres = Genre.active_ordered
+        page = params[:page] || 1
+        per_page = params[:per_page] || DEFAULT_PER_PAGE
+
+        @genres = Kaminari.paginate_array(@all_genres).page(page).per(per_page)
         render template: "api/v1/genres/index", status: :ok
       end
 

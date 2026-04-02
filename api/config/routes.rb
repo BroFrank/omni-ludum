@@ -77,6 +77,8 @@ Rails.application.routes.draw do
         resources :game_genres, only: [ :index, :create, :destroy ]
       end
 
+      resources :platforms, param: :slug, only: %i[index show]
+
       resources :users, only: [] do
         resources :reviews, only: [ :index ], param: :user_slug
         resources :users_playtimes, only: [ :index ], param: :user_slug

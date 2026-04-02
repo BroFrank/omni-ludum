@@ -12,6 +12,15 @@ class Platform < ApplicationRecord
 
   before_validation :generate_slug, if: -> { slug.blank? }
 
+  after_save :invalidate_active_ordered_cache
+  after_destroy :invalidate_active_ordered_cache
+
+  def self.active_ordered
+    Rails.cache.fetch("platforms/v1/active_ordered", expires_in: 1.hour) do
+      active.order(:name).to_a
+    end
+  end
+
   def self.find_by_slug!(slug)
     active.find_by!(slug: slug)
   end
@@ -32,5 +41,9 @@ class Platform < ApplicationRecord
     self.slug = name.downcase
                .gsub(/\s+/, "-")
                .gsub(/[^a-z0-9\-]/, "")
+  end
+
+  def invalidate_active_ordered_cache
+    Rails.cache.delete("platforms/v1/active_ordered")
   end
 end

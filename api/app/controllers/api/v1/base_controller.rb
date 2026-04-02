@@ -38,6 +38,10 @@ module Api
         render_not_found("Genre")
       end
 
+      def platform_not_found
+        render_not_found("Platform")
+      end
+
       def render_not_found(resource_name = "Resource")
         render json: { error: "#{resource_name} not found" }, status: :not_found
       end
@@ -52,14 +56,14 @@ module Api
 
       def current_user
         @current_user ||= begin
-          token = request.headers['Authorization']&.split(' ')&.last
+          token = request.headers["Authorization"]&.split(" ")&.last
           return nil unless token
 
           payload = JwtService.decode(token)
           user = User.find_by(id: payload[:sub])
 
           if user && payload[:token_version] && payload[:token_version] != user.token_version
-            raise 'Token version mismatch - tokens have been invalidated'
+            raise "Token version mismatch - tokens have been invalidated"
           end
 
           user
@@ -75,7 +79,7 @@ module Api
       def require_authentication!
         return true if authenticated?
 
-        render json: { error: 'Authentication required' }, status: :unauthorized
+        render json: { error: "Authentication required" }, status: :unauthorized
         false
       end
     end

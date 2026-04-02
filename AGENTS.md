@@ -104,6 +104,16 @@ docker compose down             # stop all
 - **Exempt**: `/up` health check endpoint
 - **Redis**: Configured via Rails credentials, uses Yandex Container Registry mirror (`cr.yandex/mirror/redis:7-alpine`)
 
+## Caching
+
+- **Rails.cache** with MemoryStore in development (namespace: `omni_ludum_dev`)
+- **Cached data**: Active genres, platforms, publishers lists (1 hour TTL)
+- **Cache keys**: `genres/v1/active_ordered`, `platforms/v1/active_ordered`, `publishers/v1/active_ordered`
+- **Invalidation**: Automatic via `after_save`/`after_destroy` callbacks in models
+- **Pagination**: Use `Kaminari.paginate_array()` for paginating cached arrays
+- **Rake tasks**: `rails cache:clear`, `rails cache:clear_references`
+- **Production**: Configure Redis-backed cache store (`:redis_cache_store`)
+
 ## Conventions
 
 - No documentation comments in code.

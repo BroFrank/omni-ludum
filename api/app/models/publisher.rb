@@ -14,11 +14,20 @@ class Publisher < ApplicationRecord
   before_validation :check_name_uniqueness, if: :name_changed?
   before_validation :check_slug_uniqueness, if: :slug_changed?
 
+  after_save :invalidate_active_ordered_cache
+  after_destroy :invalidate_active_ordered_cache
+
   scope :active, -> { where(is_disabled: false) }
   scope :disabled, -> { where(is_disabled: true) }
   scope :publishers, -> { where(type: PUBLISHER_TYPES::PUBLISHER) }
   scope :developers, -> { where(type: PUBLISHER_TYPES::DEVELOPER) }
   scope :persons, -> { where(type: PUBLISHER_TYPES::PERSON) }
+
+  def self.active_ordered
+    Rails.cache.fetch("publishers/v1/active_ordered", expires_in: 1.hour) do
+      active.order(:name).to_a
+    end
+  end
 
   def publisher?
     type == PUBLISHER_TYPES::PUBLISHER
@@ -95,5 +104,11 @@ class Publisher < ApplicationRecord
     if existing.exists?
       errors.add(:slug, :taken)
     end
+  end
+
+  private
+
+  def invalidate_active_ordered_cache
+    Rails.cache.delete("publishers/v1/active_ordered")
   end
 end

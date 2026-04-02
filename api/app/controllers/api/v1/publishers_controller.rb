@@ -4,10 +4,11 @@ module Api
       before_action :set_publisher, only: %i[show update disable]
 
       def index
-        @publishers = Publisher.active
-          .includes(:publisher_texts, :games)
-          .page(params[:page])
-          .per(params[:per_page] || DEFAULT_PER_PAGE)
+        @all_publishers = Publisher.active_ordered
+        page = params[:page] || 1
+        per_page = params[:per_page] || DEFAULT_PER_PAGE
+
+        @publishers = Kaminari.paginate_array(@all_publishers).page(page).per(per_page)
         render template: "api/v1/publishers/index", status: :ok
       end
 

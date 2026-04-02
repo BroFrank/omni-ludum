@@ -235,6 +235,7 @@ npm run lint              # ESLint
 - **Race Condition Fixes**: `GameRatingRecalculationService` and `UsersPlaytimeRecalculationService` use `find_or_create_by!` with unique partial indexes to prevent duplicate pending recalculations under high concurrency
 - **JWT Security**: Access token blacklist implemented using PostgreSQL with automatic cleanup. Token versioning for bulk invalidation on security events (password change, account disable). Immediate token revocation on logout.
 - **N+1 Query Optimization**: All controllers use eager loading (`.includes()`) to prevent N+1 query problems when rendering JSON responses with associations (platform, publisher, genres, game_texts, etc.). Background job services (GameRatingRecalculationService, UsersPlaytimeRecalculationService) use bulk loading (`Game.where(id: game_ids).index_by(&:id)`) to avoid N+1 when processing pending recalculations
+- **Caching**: Rails.cache with MemoryStore in development. Cached data: active genres, platforms, publishers lists (1 hour TTL). Automatic cache invalidation on model save/destroy. Rake tasks for manual cache clear (`rails cache:clear_references`).
 
 ## User Entity
 
@@ -1832,3 +1833,91 @@ The following are exempt from rate limiting:
 - Use a dedicated Redis instance or cluster for production
 - Consider increasing limits based on actual traffic patterns
 - Monitor rate limit hits for security analysis
+
+## Caching
+
+### Overview
+
+The API uses `Rails.cache` with MemoryStore backend in development for caching frequently requested static data.
+
+### Configuration
+
+**Development** (`config/environments/development.rb`):
+```ruby
+config.cache_store = :memory_store, { namespace: 'omni_ludum_dev' }
+```
+
+Caching is enabled when `tmp/caching-dev.txt` exists. Toggle with:
+```bash
+cd api && rails dev:cache
+```
+
+### Cached Data
+
+| Data | Key Pattern | TTL |
+|------|-------------|-----|
+| Active Genres | `genres/v1/active_ordered` | 1 hour |
+| Active Platforms | `platforms/v1/active_ordered` | 1 hour |
+| Active Publishers | `publishers/v1/active_ordered` | 1 hour |
+
+### Cache Invalidation
+
+Automatic invalidation on model changes:
+- `Genre` — `after_save` and `after_destroy` callbacks
+- `Platform` — `after_save` and `after_destroy` callbacks
+- `Publisher` — `after_save` and `after_destroy` callbacks
+
+### Rake Tasks
+
+```bash
+# Clear all caches
+rails cache:clear
+
+# Clear specific caches
+rails cache:clear_genres
+rails cache:clear_platforms
+rails cache:clear_publishers
+
+# Clear all reference data caches
+rails cache:clear_references
+```
+
+### Implementation Pattern
+
+**Model** (`app/models/genre.rb`):
+```ruby
+def self.active_ordered
+  Rails.cache.fetch("genres/v1/active_ordered", expires_in: 1.hour) do
+    active.order(:name).to_a
+  end
+end
+
+private
+
+def invalidate_active_ordered_cache
+  Rails.cache.delete("genres/v1/active_ordered")
+end
+```
+
+**Controller** (`app/controllers/api/v1/genres_controller.rb`):
+```ruby
+def index
+  @all_genres = Genre.active_ordered
+  page = params[:page] || 1
+  per_page = params[:per_page] || DEFAULT_PER_PAGE
+
+  @genres = Kaminari.paginate_array(@all_genres).page(page).per(per_page)
+  render template: "api/v1/genres/index", status: :ok
+end
+```
+
+### Production Considerations
+
+For production deployment, configure Redis-backed cache store:
+```ruby
+config.cache_store = :redis_cache_store, {
+  url: ENV.fetch('REDIS_URL'),
+  namespace: 'omni_ludum',
+  expires_in: 1.hour
+}
+```
