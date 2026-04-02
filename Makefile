@@ -1,4 +1,4 @@
-.PHONY: db-up db-down db-console db-logs db-restart api-dev api-queue api-dev-all
+.PHONY: db-up db-down db-console db-logs db-restart redis-up redis-down redis-console redis-logs redis-restart api-dev api-queue api-dev-all
 
 # Start PostgreSQL database container
 db-up:
@@ -19,6 +19,26 @@ db-logs:
 # Restart database container
 db-restart:
 	docker compose restart db
+
+# Start Redis container
+redis-up:
+	docker compose up -d redis
+
+# Stop Redis container
+redis-down:
+	docker compose down redis
+
+# Open Redis CLI console
+redis-console:
+	docker compose exec redis redis-cli
+
+# View Redis logs
+redis-logs:
+	docker compose logs -f redis
+
+# Restart Redis container
+redis-restart:
+	docker compose restart redis
 
 # Start Rails development server
 api-dev:

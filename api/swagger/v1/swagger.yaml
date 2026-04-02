@@ -1,7 +1,47 @@
 openapi: 3.0.3
 info:
   title: Omni Ludum API
-  description: API documentation for Omni Ludum application
+  description: |
+    API documentation for Omni Ludum application
+    
+    ## Rate Limiting
+    
+    This API implements rate limiting to prevent abuse and ensure fair usage. When rate limits are exceeded, the API returns HTTP 429 (Too Many Requests).
+    
+    ### Rate Limits
+    
+    | Endpoint | Limit | Period | Key |
+    |----------|-------|--------|-----|
+    | POST /auth/login | 5 | 1 minute | IP |
+    | POST /auth/login | 3 | 1 minute | Email |
+    | POST /auth/refresh | 30 | 1 minute | IP |
+    | DELETE /auth/logout | 10 | 1 minute | IP |
+    | DELETE /auth/logout_all | 5 | 1 minute | IP |
+    | POST /users | 3 | 1 hour | IP |
+    | POST /users | 1 | 1 hour | Email |
+    | POST /assets | 10 | 1 minute | IP |
+    | POST /assets | 20 | 1 minute | User ID |
+    | GET * | 300 | 1 minute | IP |
+    | POST/PUT/PATCH * | 60 | 1 minute | IP |
+    | DELETE * | 30 | 1 minute | IP |
+    | All (authenticated) | 600 | 1 minute | User ID |
+    
+    ### Rate Limit Headers
+    
+    All responses include rate limit headers:
+    - `X-RateLimit-Limit`: Maximum requests allowed in the time window
+    - `X-RateLimit-Remaining`: Number of requests remaining
+    - `X-RateLimit-Reset`: Unix timestamp when the limit resets
+    - `Retry-After`: Seconds to wait before retrying (only on 429 responses)
+    
+    ### 429 Response Format
+    
+    ```json
+    {
+      "error": "Too many requests",
+      "retry_after": 60
+    }
+    ```
   version: 1.0.0
 servers:
   - url: http://localhost:3000
@@ -33,6 +73,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthError'
+        '429':
+          description: Too many requests (rate limit exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: string
+              description: Maximum requests allowed
+            X-RateLimit-Remaining:
+              schema:
+                type: string
+              description: Requests remaining
+            X-RateLimit-Reset:
+              schema:
+                type: string
+              description: Reset timestamp
+            Retry-After:
+              schema:
+                type: string
+              description: Seconds to wait
 
   /api/v1/auth/refresh:
     post:
@@ -53,6 +116,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthError'
+        '429':
+          description: Too many requests (rate limit exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: string
+              description: Maximum requests allowed
+            X-RateLimit-Remaining:
+              schema:
+                type: string
+              description: Requests remaining
+            X-RateLimit-Reset:
+              schema:
+                type: string
+              description: Reset timestamp
+            Retry-After:
+              schema:
+                type: string
+              description: Seconds to wait
 
   /api/v1/auth/logout:
     delete:
@@ -71,6 +157,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthError'
+        '429':
+          description: Too many requests (rate limit exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: string
+              description: Maximum requests allowed
+            X-RateLimit-Remaining:
+              schema:
+                type: string
+              description: Requests remaining
+            X-RateLimit-Reset:
+              schema:
+                type: string
+              description: Reset timestamp
+            Retry-After:
+              schema:
+                type: string
+              description: Seconds to wait
 
   /api/v1/auth/logout_all:
     delete:
@@ -89,6 +198,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthError'
+        '429':
+          description: Too many requests (rate limit exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: string
+              description: Maximum requests allowed
+            X-RateLimit-Remaining:
+              schema:
+                type: string
+              description: Requests remaining
+            X-RateLimit-Reset:
+              schema:
+                type: string
+              description: Reset timestamp
+            Retry-After:
+              schema:
+                type: string
+              description: Seconds to wait
 
   /api/v1/users:
     get:
@@ -4050,6 +4182,41 @@ components:
           type: string
           description: Error message
           example: "Resource not found"
+
+    # Rate limiting error responses
+    RateLimitError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Too many requests"
+        retry_after:
+          type: integer
+          description: Seconds to wait before retrying
+          example: 60
+      description: Returned when rate limit is exceeded (HTTP 429)
+
+    RateLimitHeaders:
+      type: object
+      properties:
+        X-RateLimit-Limit:
+          type: string
+          description: Maximum number of requests allowed in the time window
+          example: "300"
+        X-RateLimit-Remaining:
+          type: string
+          description: Number of requests remaining in the current window
+          example: "0"
+        X-RateLimit-Reset:
+          type: string
+          description: Unix timestamp when the rate limit window resets
+          example: "1743595200"
+        Retry-After:
+          type: string
+          description: Seconds to wait before making another request
+          example: "60"
+      description: Rate limit headers included in 429 responses
 
   securitySchemes:
     bearerAuth:

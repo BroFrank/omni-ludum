@@ -1726,3 +1726,109 @@ The `token_version` is incremented, invalidating all previously issued access to
 3. **Immediate revocation:** Logout adds access token to blacklist
 4. **Bulk invalidation:** Token versioning for security events
 5. **Automatic cleanup:** Expired blacklist entries removed daily
+
+## Rate Limiting
+
+### Overview
+
+The API implements rate limiting using **Rack::Attack** with **Redis** as the backend store to prevent abuse, brute force attacks, and DoS attacks.
+
+### Configuration Files
+
+| File | Description |
+|------|-------------|
+| `api/config/initializers/rack_attack.rb` | Rate limiting rules and throttles |
+| `api/config/initializers/rack_attack_store.rb` | Redis store configuration |
+| `api/config/initializers/rack_attack_store.rb` | Uses Rails credentials for Redis connection |
+
+### Redis Configuration
+
+Redis connection is configured via Rails credentials:
+
+```yaml
+# Rails credentials (edit with: EDITOR="nano" bin/rails credentials:edit)
+redis:
+  url: redis://localhost:6379/1
+  namespace: rack_attack
+```
+
+### Rate Limits
+
+| Endpoint | Limit | Period | Key |
+|----------|-------|--------|-----|
+| POST /auth/login | 5 | 1 minute | IP |
+| POST /auth/login | 3 | 1 minute | Email |
+| POST /auth/refresh | 30 | 1 minute | IP |
+| DELETE /auth/logout | 10 | 1 minute | IP |
+| DELETE /auth/logout_all | 5 | 1 minute | IP |
+| POST /users | 3 | 1 hour | IP |
+| POST /users | 1 | 1 hour | Email |
+| POST /assets | 10 | 1 minute | IP |
+| POST /assets | 20 | 1 minute | User ID |
+| GET * | 300 | 1 minute | IP |
+| POST/PUT/PATCH * | 60 | 1 minute | IP |
+| DELETE * | 30 | 1 minute | IP |
+| All (authenticated) | 600 | 1 minute | User ID |
+
+### 429 Too Many Requests Response
+
+When rate limit is exceeded, the API returns:
+
+**HTTP Status:** `429 Too Many Requests`
+
+**Response Body:**
+```json
+{
+  "error": "Too many requests",
+  "retry_after": 60
+}
+```
+
+**Headers:**
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests allowed in the time window |
+| `X-RateLimit-Remaining` | Number of requests remaining |
+| `X-RateLimit-Reset` | Unix timestamp when the limit resets |
+| `Retry-After` | Seconds to wait before retrying |
+
+### Redis Keys
+
+Rate limit counters are stored in Redis with the following key format:
+
+- `rack_attack:throttle:logins/ip:<ip_address>` — login attempts by IP
+- `rack_attack:throttle:logins/email:<email>` — login attempts by email
+- `rack_attack:throttle:api/ip:<ip_address>` — general API requests by IP
+- `rack_attack:throttle:api/user:<user_id>` — authenticated user requests
+
+TTL is automatically set based on the `period` parameter.
+
+### Docker Setup (Development)
+
+Redis runs in a Docker container using Yandex Container Registry mirror:
+
+```bash
+# Start Redis
+make redis-up
+
+# Stop Redis
+make redis-down
+
+# Redis CLI
+make redis-console
+
+# View logs
+make redis-logs
+```
+
+### Allowlist
+
+The following are exempt from rate limiting:
+- Health check endpoint (`/up`)
+- Internal IPs (if configured in credentials)
+
+### Production Notes
+
+- Use a dedicated Redis instance or cluster for production
+- Consider increasing limits based on actual traffic patterns
+- Monitor rate limit hits for security analysis

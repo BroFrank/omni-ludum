@@ -49,6 +49,10 @@ make db-console     # open psql
 make api-dev        # start Rails server
 make api-queue      # start Solid Queue worker
 make api-dev-all    # Rails + Solid Queue (requires foreman)
+make redis-up       # start Redis container
+make redis-down     # stop Redis container
+make redis-console  # open Redis CLI
+make redis-logs     # view Redis logs
 docker compose up -d            # all containers
 docker compose down             # stop all
 ```
@@ -64,6 +68,7 @@ docker compose down             # stop all
 - **Constants**: defined in `config/initializers/consts.rb` (USER_ROLES, USER_THEMES, LINK_TYPES, etc.). Use `.freeze`.
 - **Audit logging**: include `Auditable` concern in models. Uses `Thread.current[:current_user_id]` set by `CurrentUserAudit` controller concern.
 - **Background jobs**: Solid Queue. Use `find_or_create_by!` with unique partial indexes to prevent race conditions.
+- **Rate limiting**: Rack::Attack with Redis store. Configured in `config/initializers/rack_attack.rb` and `rack_attack_store.rb`.
 - **No comments** in code unless clarifying non-obvious logic. No `puts`/`p`/`Rails.logger.debug` in committed code.
 
 ## Code Style — Frontend (SvelteKit/TypeScript)
@@ -86,6 +91,18 @@ docker compose down             # stop all
 
 - **Backend**: `BaseController` provides `render_validation_errors`, `render_not_found`, `render_service_error`. All responses are JSON with `{ errors: [...] }` or `{ error: "..." }` format.
 - **Frontend**: handle API errors gracefully. Show user-friendly messages. No raw error objects in UI.
+
+## Rate Limiting
+
+- **Rack::Attack** with **Redis** store for rate limiting
+- **429 Too Many Requests** returned when limits exceeded
+- **Headers**: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After`
+- **Key limits**:
+  - Login: 5/min (IP), 3/min (email)
+  - GET requests: 300/min (IP)
+  - Authenticated users: 600/min (user_id)
+- **Exempt**: `/up` health check endpoint
+- **Redis**: Configured via Rails credentials, uses Yandex Container Registry mirror (`cr.yandex/mirror/redis:7-alpine`)
 
 ## Conventions
 

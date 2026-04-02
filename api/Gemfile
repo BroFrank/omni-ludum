@@ -32,6 +32,12 @@ gem "bootsnap", require: false
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 gem "rack-cors"
 
+# Rate limiting [https://github.com/rack/rack-attack]
+gem "rack-attack"
+
+# Redis for Rack::Attack store [https://github.com/redis/redis-rb]
+gem "redis", ">= 4.0.1"
+
 # Pagination [https://github.com/amatsuda/kaminari]
 gem "kaminari"
 

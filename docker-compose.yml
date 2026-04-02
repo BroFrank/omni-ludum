@@ -25,9 +25,30 @@ services:
     networks:
       - omni_ludum_network
 
+  # Redis Service for Rate Limiting (Rack::Attack)
+  # Uses Yandex Container Registry mirror for Russia
+  redis:
+    image: cr.yandex/mirror/redis:7-alpine
+    container_name: omni_ludum_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - omni_ludum_network
+
 volumes:
   postgres_data:
     name: omni_ludum_postgres_data
+  redis_data:
+    name: omni_ludum_redis_data
 
 networks:
   omni_ludum_network:
