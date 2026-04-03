@@ -70,6 +70,7 @@ docker compose down             # stop all
 - **Background jobs**: Solid Queue. Use `find_or_create_by!` with unique partial indexes to prevent race conditions.
 - **Rate limiting**: Rack::Attack with Redis store. Configured in `config/initializers/rack_attack.rb` and `rack_attack_store.rb`.
 - **No comments** in code unless clarifying non-obvious logic. No `puts`/`p`/`Rails.logger.debug` in committed code.
+- **`average()` nil handling**: `ActiveRecord#average()` returns `nil` when all values are NULL. Always use safe navigation (`&.to_f`, `&.to_i`) to preserve `nil` instead of silently converting to `0`. Test both scenarios: records with NULL values and records with numeric values.
 
 ## Code Style — Frontend (SvelteKit/TypeScript)
 

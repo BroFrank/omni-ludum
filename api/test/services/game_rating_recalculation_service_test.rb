@@ -5,6 +5,10 @@ class GameRatingRecalculationServiceTest < ActiveSupport::TestCase
     @game = games(:one)
   end
 
+  teardown do
+    GameRatingRecalculation.where(game_id: @game.id).delete_all
+  end
+
   test "enqueue creates pending recalculation" do
     assert_difference "GameRatingRecalculation.count", 1 do
       result = GameRatingRecalculationService.enqueue(@game.id)
@@ -98,6 +102,73 @@ class GameRatingRecalculationServiceTest < ActiveSupport::TestCase
     @game.reload
     assert_nil @game.rating_avg
     assert_nil @game.difficulty_avg
+  end
+
+  test "process_recalculation handles zero ratings correctly" do
+    Review.create!(
+      game: @game,
+      user: users(:one),
+      rating: 0,
+      difficulty: 0
+    )
+
+    recalculation = GameRatingRecalculation.find_by!(
+      game_id: @game.id,
+      status: GameRatingRecalculation::STATUS_PENDING
+    )
+
+    GameRatingRecalculationService.process_recalculation(recalculation)
+
+    @game.reload
+    assert_equal 0.0, @game.rating_avg
+    assert_equal 0.0, @game.difficulty_avg
+  end
+
+  test "process_recalculation calculates average with multiple reviews" do
+    Review.create!(
+      game: @game,
+      user: users(:one),
+      rating: 8,
+      difficulty: 5
+    )
+    Review.create!(
+      game: @game,
+      user: users(:two),
+      rating: 10,
+      difficulty: 7
+    )
+
+    recalculation = GameRatingRecalculation.find_by!(
+      game_id: @game.id,
+      status: GameRatingRecalculation::STATUS_PENDING
+    )
+
+    GameRatingRecalculationService.process_recalculation(recalculation)
+
+    @game.reload
+    assert_equal 9.0, @game.rating_avg
+    assert_equal 6.0, @game.difficulty_avg
+  end
+
+  test "process_recalcation_for_game calculates average with multiple reviews" do
+    Review.create!(
+      game: @game,
+      user: users(:one),
+      rating: 8,
+      difficulty: 5
+    )
+    Review.create!(
+      game: @game,
+      user: users(:two),
+      rating: 10,
+      difficulty: 7
+    )
+
+    GameRatingRecalculationService.process_recalcation_for_game(@game.id)
+
+    @game.reload
+    assert_equal 9.0, @game.rating_avg
+    assert_equal 6.0, @game.difficulty_avg
   end
 
   test "cleanup_old removes old completed recalculations" do

@@ -2926,20 +2926,24 @@ components:
         rating_avg:
           type: number
           format: float
-          description: Average user rating (0-10)
+          nullable: true
+          description: Average user rating (0-10). Null when no active reviews with ratings exist.
           example: 9.5
         difficulty_avg:
           type: number
           format: float
-          description: Average difficulty rating (0-10)
+          nullable: true
+          description: Average difficulty rating (0-10). Null when no active reviews with difficulties exist.
           example: 6.0
         playtime_avg:
           type: integer
-          description: Average playtime in minutes
+          nullable: true
+          description: Average playtime in minutes. Null when no active playtimes with minutes_regular exist.
           example: 120
         playtime_100_avg:
           type: integer
-          description: Average time to 100% completion in minutes
+          nullable: true
+          description: Average time to 100% completion in minutes. Null when no active playtimes with minutes_100 exist.
           example: 360
         is_dlc:
           type: boolean
@@ -3028,19 +3032,23 @@ components:
             rating_avg:
               type: number
               format: float
+              nullable: true
               description: Average user rating (0-10)
               example: 8.0
             difficulty_avg:
               type: number
               format: float
+              nullable: true
               description: Average difficulty rating (0-10)
               example: 5.0
             playtime_avg:
               type: integer
+              nullable: true
               description: Average playtime in minutes
               example: 120
             playtime_100_avg:
               type: integer
+              nullable: true
               description: Average time to 100% completion in minutes
               example: 360
             is_dlc:
@@ -3079,19 +3087,23 @@ components:
             rating_avg:
               type: number
               format: float
+              nullable: true
               description: Average user rating (0-10)
               example: 9.0
             difficulty_avg:
               type: number
               format: float
+              nullable: true
               description: Average difficulty rating (0-10)
               example: 6.5
             playtime_avg:
               type: integer
+              nullable: true
               description: Average playtime in minutes
               example: 150
             playtime_100_avg:
               type: integer
+              nullable: true
               description: Average time to 100% completion in minutes
               example: 400
             is_dlc:

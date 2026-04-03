@@ -1296,6 +1296,54 @@ development:
     schedule: at 3am every day
 ```
 
+## Best Practices: `average()` Nil Handling
+
+### Problem
+
+PostgreSQL `AVG()` aggregate function returns `NULL` when:
+1. The result set is empty
+2. All values in the aggregated column are `NULL`
+
+In Rails, `ActiveRecord#average()` returns `nil` in both cases. Calling `.to_f` or `.to_i` on `nil` silently converts it to `0.0` or `0`, which corrupts statistics data.
+
+### Correct Pattern
+
+```ruby
+# ✅ Correct - preserves nil
+rating_avg = records.average(:rating)&.to_f&.round(2)
+playtime_avg = records.average(:minutes_regular)&.to_i
+
+# ✅ Correct - explicit check
+avg = records.average(:column)
+value = avg ? avg.to_f.round(2) : nil
+
+# ❌ Wrong - nil silently becomes 0.0
+rating_avg = records.average(:rating).to_f.round(2)
+playtime_avg = records.average(:minutes_regular).to_i
+```
+
+### Affected Files
+
+| File | Method | Fields |
+|------|--------|--------|
+| `app/services/game_rating_recalculation_service.rb` | `process_recalculation_for_game`, `process_recalculation` | `rating_avg`, `difficulty_avg` |
+| `app/services/users_playtime_recalculation_service.rb` | `process_recalculation` | `playtime_avg`, `playtime_100_avg` |
+| `app/models/game.rb` | `recalculate_playtime_avg` | `playtime_avg`, `playtime_100_avg` |
+
+### Testing Requirements
+
+When writing tests for methods using `average()`, cover these scenarios:
+- Records exist, all values are `NULL` → result should be `nil`
+- Records exist, mixed `NULL` and numeric values → correct average of non-NULL values
+- Records exist, all values are `0` → result should be `0` (valid data, not nil)
+- No records exist → result should be `nil`
+
+### API Response Schema
+
+All average fields in API responses are nullable (`nullable: true` in OpenAPI spec):
+- `rating_avg`, `difficulty_avg` — can be `null` when no active reviews exist or all reviews have `NULL` ratings
+- `playtime_avg`, `playtime_100_avg` — can be `null` when no active playtimes exist or all playtimes have `NULL` minutes
+
 ## Error Handling
 
 All API error responses follow a standardized format handled by `Api::V1::BaseController`.

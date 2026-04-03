@@ -3,6 +3,13 @@ require "test_helper"
 class UsersPlaytimeRecalculationServiceTest < ActiveSupport::TestCase
   setup do
     @game = games(:one)
+    UsersPlaytimeRecalculation.where(game_id: @game.id).delete_all
+    UsersPlaytime.where(game_id: @game.id).delete_all
+  end
+
+  teardown do
+    UsersPlaytimeRecalculation.where(game_id: @game.id).delete_all
+    UsersPlaytime.where(game_id: @game.id).delete_all
   end
 
   test "enqueue creates pending recalculation" do
@@ -98,6 +105,98 @@ class UsersPlaytimeRecalculationServiceTest < ActiveSupport::TestCase
     @game.reload
     assert_nil @game.playtime_avg
     assert_nil @game.playtime_100_avg
+  end
+
+  test "process_recalculation sets nil when all playtimes have NULL minutes" do
+    UsersPlaytime.create!(
+      game: @game,
+      user: users(:one),
+      minutes_regular: nil,
+      minutes_100: nil
+    )
+
+    recalculation = UsersPlaytimeRecalculation.find_by!(
+      game_id: @game.id,
+      status: UsersPlaytimeRecalculation::STATUS_PENDING
+    )
+
+    UsersPlaytimeRecalculationService.process_recalculation(recalculation)
+
+    @game.reload
+    assert_nil @game.playtime_avg
+    assert_nil @game.playtime_100_avg
+  end
+
+  test "process_recalculation calculates average with mixed NULL and numeric values" do
+    UsersPlaytime.create!(
+      game: @game,
+      user: users(:one),
+      minutes_regular: 120,
+      minutes_100: 180
+    )
+    UsersPlaytime.create!(
+      game: @game,
+      user: users(:two),
+      minutes_regular: nil,
+      minutes_100: nil
+    )
+
+    recalculation = UsersPlaytimeRecalculation.find_by!(
+      game_id: @game.id,
+      status: UsersPlaytimeRecalculation::STATUS_PENDING
+    )
+
+    UsersPlaytimeRecalculationService.process_recalculation(recalculation)
+
+    @game.reload
+    assert_equal 120, @game.playtime_avg
+    assert_equal 180, @game.playtime_100_avg
+  end
+
+  test "process_recalculation handles zero playtime correctly" do
+    UsersPlaytime.create!(
+      game: @game,
+      user: users(:one),
+      minutes_regular: 0,
+      minutes_100: 0
+    )
+
+    recalculation = UsersPlaytimeRecalculation.find_by!(
+      game_id: @game.id,
+      status: UsersPlaytimeRecalculation::STATUS_PENDING
+    )
+
+    UsersPlaytimeRecalculationService.process_recalculation(recalculation)
+
+    @game.reload
+    assert_equal 0, @game.playtime_avg
+    assert_equal 0, @game.playtime_100_avg
+  end
+
+  test "process_recalculation handles partial NULL minutes_100" do
+    UsersPlaytime.create!(
+      game: @game,
+      user: users(:one),
+      minutes_regular: 100,
+      minutes_100: nil
+    )
+    UsersPlaytime.create!(
+      game: @game,
+      user: users(:two),
+      minutes_regular: 140,
+      minutes_100: 200
+    )
+
+    recalculation = UsersPlaytimeRecalculation.find_by!(
+      game_id: @game.id,
+      status: UsersPlaytimeRecalculation::STATUS_PENDING
+    )
+
+    UsersPlaytimeRecalculationService.process_recalculation(recalculation)
+
+    @game.reload
+    assert_equal 120, @game.playtime_avg
+    assert_equal 200, @game.playtime_100_avg
   end
 
   test "cleanup_old removes old completed recalculations" do

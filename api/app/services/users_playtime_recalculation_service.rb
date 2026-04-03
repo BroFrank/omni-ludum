@@ -33,7 +33,7 @@ class UsersPlaytimeRecalculationService
 
   def self.process_pending
     recalculations = UsersPlaytimeRecalculation.for_processing.limit(DEFAULT_BATCH_SIZE)
-    
+
     game_ids = recalculations.pluck(:game_id)
     games = Game.where(id: game_ids).index_by(&:id)
 
@@ -44,7 +44,7 @@ class UsersPlaytimeRecalculationService
 
   def self.process_recalculation(recalculation, game = nil)
     recalculation.update!(status: UsersPlaytimeRecalculation::STATUS_PROCESSING)
-    
+
     game ||= Game.find_by(id: recalculation.game_id)
 
     if game.nil?
@@ -59,8 +59,8 @@ class UsersPlaytimeRecalculationService
     active_playtimes = game.users_playtimes.active
 
     if active_playtimes.exists?
-      playtime_avg = active_playtimes.average(:minutes_regular).to_i
-      playtime_100_avg = active_playtimes.average(:minutes_100).to_i
+      playtime_avg = active_playtimes.average(:minutes_regular)&.to_i
+      playtime_100_avg = active_playtimes.average(:minutes_100)&.to_i
 
       game.update!(
         playtime_avg: playtime_avg,

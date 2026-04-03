@@ -42,8 +42,8 @@ class GameRatingRecalculationService
     active_reviews = game.reviews.active
 
     if active_reviews.exists?
-      rating_avg = active_reviews.average(:rating).to_f.round(2)
-      difficulty_avg = active_reviews.average(:difficulty).to_f.round(2)
+      rating_avg = active_reviews.average(:rating)&.to_f&.round(2)
+      difficulty_avg = active_reviews.average(:difficulty)&.to_f&.round(2)
 
       game.update!(
         rating_avg: rating_avg,
@@ -65,7 +65,7 @@ class GameRatingRecalculationService
 
   def self.process_pending
     recalculations = GameRatingRecalculation.for_processing.limit(DEFAULT_BATCH_SIZE)
-    
+
     game_ids = recalculations.pluck(:game_id)
     games = Game.where(id: game_ids).index_by(&:id)
 
@@ -76,7 +76,7 @@ class GameRatingRecalculationService
 
   def self.process_recalculation(recalculation, game = nil)
     recalculation.update!(status: GameRatingRecalculation::STATUS_PROCESSING)
-    
+
     game ||= Game.find_by(id: recalculation.game_id)
 
     if game.nil?
@@ -91,8 +91,8 @@ class GameRatingRecalculationService
     active_reviews = game.reviews.active
 
     if active_reviews.exists?
-      rating_avg = active_reviews.average(:rating).to_f.round(2)
-      difficulty_avg = active_reviews.average(:difficulty).to_f.round(2)
+      rating_avg = active_reviews.average(:rating)&.to_f&.round(2)
+      difficulty_avg = active_reviews.average(:difficulty)&.to_f&.round(2)
 
       game.update!(
         rating_avg: rating_avg,
